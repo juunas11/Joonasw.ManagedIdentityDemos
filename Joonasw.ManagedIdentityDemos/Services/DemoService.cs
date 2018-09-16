@@ -146,7 +146,7 @@ namespace Joonasw.ManagedIdentityDemos.Services
             var tokenProvider = new ManagedIdentityServiceBusTokenProvider(_settings.ManagedIdentityTenantId);
             var queueClient = new QueueClient(endpoint, queueName, tokenProvider);
 
-            var message = new Message(Encoding.UTF8.GetBytes($"Test message {Guid.NewGuid()}"));
+            var message = new Message(Encoding.UTF8.GetBytes($"Test message {Guid.NewGuid()} ({DateTime.UtcNow:HH:mm:ss})"));
             await queueClient.SendAsync(message);
         }
 

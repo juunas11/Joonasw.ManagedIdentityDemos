@@ -1,4 +1,5 @@
-﻿using Joonasw.ManagedIdentityDemos.Contracts;
+﻿using Joonasw.ManagedIdentityDemos.Background;
+using Joonasw.ManagedIdentityDemos.Contracts;
 using Joonasw.ManagedIdentityDemos.Data;
 using Joonasw.ManagedIdentityDemos.Options;
 using Joonasw.ManagedIdentityDemos.Services;
@@ -8,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace Joonasw.ManagedIdentityDemos
 {
@@ -19,11 +21,14 @@ namespace Joonasw.ManagedIdentityDemos
         }
 
         public IConfiguration Configuration { get; }
+
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            services.AddSignalR();
 
             services.AddTransient<IDemoService, DemoService>();
+            services.AddSingleton<IHostedService, QueueListenerService>();
 
             services.Configure<DemoSettings>(Configuration.GetSection("Demo"));
 
@@ -36,7 +41,7 @@ namespace Joonasw.ManagedIdentityDemos
             });
         }
 
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, Microsoft.AspNetCore.Hosting.IHostingEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -50,6 +55,11 @@ namespace Joonasw.ManagedIdentityDemos
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
+
+            app.UseSignalR(routes =>
+            {
+                routes.MapHub<QueueMessageHub>("/messages");
+            });
 
             app.UseMvc(routes =>
             {
