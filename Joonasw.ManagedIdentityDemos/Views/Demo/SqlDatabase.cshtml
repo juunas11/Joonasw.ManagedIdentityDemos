@@ -1,0 +1,24 @@
+﻿@model SqlDatabaseViewModel
+@{
+    ViewData["Title"] = "Azure SQL Database";
+}
+
+<h2>Azure SQL Database</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Value</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var row in Model.Results)
+        {
+            <tr>
+                <td>@row.Id</td>
+                <td>@row.Value</td>
+            </tr>
+        }
+    </tbody>
+</table>
