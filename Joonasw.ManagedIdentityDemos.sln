@@ -5,7 +5,12 @@ VisualStudioVersion = 15.0.27924.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Joonasw.ManagedIdentityDemos", "Joonasw.ManagedIdentityDemos\Joonasw.ManagedIdentityDemos.csproj", "{C222D8D2-71C7-4FB6-843F-A7F324D90321}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Joonasw.ManagedIdentityDemos.CustomApi", "Joonasw.ManagedIdentityDemos.CustomApi\Joonasw.ManagedIdentityDemos.CustomApi.csproj", "{5A615BC8-50A7-480E-BD18-6FBCA7D60C5E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Joonasw.ManagedIdentityDemos.CustomApi", "Joonasw.ManagedIdentityDemos.CustomApi\Joonasw.ManagedIdentityDemos.CustomApi.csproj", "{5A615BC8-50A7-480E-BD18-6FBCA7D60C5E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E5662E31-8665-4C47-9FE4-E1DAA832599D}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
