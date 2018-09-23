@@ -18,7 +18,8 @@ namespace Joonasw.ManagedIdentityDemos.Extensions
                 if (!string.IsNullOrEmpty(keyVaultUrl))
                 {
                     var azureServiceTokenProvider = new AzureServiceTokenProvider();
-                    var kvClient = new KeyVaultClient((authority, resource, scope) => azureServiceTokenProvider.KeyVaultTokenCallback(authority, resource, scope));
+                    var kvClient = new KeyVaultClient(
+                        (authority, resource, scope) => azureServiceTokenProvider.KeyVaultTokenCallback(authority, resource, scope));
                     builder.AddAzureKeyVault(keyVaultUrl, kvClient, new DefaultKeyVaultSecretManager());
                 }
             });

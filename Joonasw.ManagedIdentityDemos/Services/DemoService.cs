@@ -39,7 +39,8 @@ namespace Joonasw.ManagedIdentityDemos.Services
             var tokenCredential = new TokenCredential(accessToken);
             var storageCredentials = new StorageCredentials(tokenCredential);
 
-            var blob = new CloudBlockBlob(new Uri($"https://{_settings.StorageAccountName}.blob.core.windows.net/{_settings.StorageContainerName}/{_settings.StorageBlobName}"), storageCredentials);
+            var blob = new CloudBlockBlob(
+                new Uri($"https://{_settings.StorageAccountName}.blob.core.windows.net/{_settings.StorageContainerName}/{_settings.StorageBlobName}"), storageCredentials);
             // We download the whole file here because we are going to show it on the Razor view
             // Usually when reading files from Storage you should use the Stream APIs, e.g. blob.OpenReadAsync()
             string content = await blob.DownloadTextAsync();
@@ -124,7 +125,8 @@ namespace Joonasw.ManagedIdentityDemos.Services
             // But we need to use app permissions, i.e. acquire token as application only
             string accessToken = await GetAccessToken(_settings.CustomApiApplicationIdUri);
             var req = new HttpRequestMessage(HttpMethod.Get, $"{_settings.CustomApiBaseUrl}/api/test");
-            req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            req.Headers.Authorization =
+                new AuthenticationHeaderValue("Bearer", accessToken);
             req.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
             var res = await HttpClient.SendAsync(req);
@@ -146,7 +148,8 @@ namespace Joonasw.ManagedIdentityDemos.Services
             var tokenProvider = new ManagedIdentityServiceBusTokenProvider(_settings.ManagedIdentityTenantId);
             var queueClient = new QueueClient(endpoint, queueName, tokenProvider);
 
-            var message = new Message(Encoding.UTF8.GetBytes($"Test message {Guid.NewGuid()} ({DateTime.UtcNow:HH:mm:ss})"));
+            var message = new Message(
+                Encoding.UTF8.GetBytes($"Test message {Guid.NewGuid()} ({DateTime.UtcNow:HH:mm:ss})"));
             await queueClient.SendAsync(message);
         }
 
