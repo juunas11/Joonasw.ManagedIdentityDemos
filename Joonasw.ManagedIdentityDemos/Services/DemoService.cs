@@ -38,9 +38,8 @@ namespace Joonasw.ManagedIdentityDemos.Services
 
             var tokenCredential = new TokenCredential(accessToken);
             var storageCredentials = new StorageCredentials(tokenCredential);
-
-            var blob = new CloudBlockBlob(
-                new Uri($"https://{_settings.StorageAccountName}.blob.core.windows.net/{_settings.StorageContainerName}/{_settings.StorageBlobName}"), storageCredentials);
+            var uri = new Uri($"https://{_settings.StorageAccountName}.blob.core.windows.net/{_settings.StorageContainerName}/{_settings.StorageBlobName}");
+            var blob = new CloudBlockBlob(uri, storageCredentials);
             // We download the whole file here because we are going to show it on the Razor view
             // Usually when reading files from Storage you should use the Stream APIs, e.g. blob.OpenReadAsync()
             string content = await blob.DownloadTextAsync();

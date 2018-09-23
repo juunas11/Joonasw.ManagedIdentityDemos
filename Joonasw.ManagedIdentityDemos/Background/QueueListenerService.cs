@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Joonasw.ManagedIdentityDemos.Options;
@@ -33,23 +30,25 @@ namespace Joonasw.ManagedIdentityDemos.Background
         {
             string endpoint = _settings.ServiceBusNamespace + ".servicebus.windows.net";
             string queueName = _settings.ServiceBusQueueName;
-            // We could use ManagedServiceIdentityTokenProvider here
+            // We could use the SDK's ManagedServiceIdentityTokenProvider here
             // But it failed for me with an assembly not found error relating to the AppServices Authentication library
+            // Also we can't specify the tenant id to it
             var tokenProvider = new ManagedIdentityServiceBusTokenProvider(_settings.ManagedIdentityTenantId);
             var queueClient = new QueueClient(endpoint, queueName, tokenProvider);
 
-            var messageHandlerOptions = new MessageHandlerOptions(HandleException)
+            try
             {
-                AutoComplete = true
-            };
-            queueClient.RegisterMessageHandler(HandleMessage, messageHandlerOptions);
-
-            while (!cancellationToken.IsCancellationRequested)
-            {
-                await Task.Delay(60_000, cancellationToken);
+                var messageHandlerOptions = new MessageHandlerOptions(HandleException)
+                {
+                    AutoComplete = true
+                };
+                queueClient.RegisterMessageHandler(HandleMessage, messageHandlerOptions);
+                await Task.Delay(-1, cancellationToken);
             }
-
-            await queueClient.CloseAsync();
+            finally
+            {
+                await queueClient.CloseAsync();
+            }
         }
 
         private async Task HandleMessage(Message msg, CancellationToken ct)

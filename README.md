@@ -12,7 +12,8 @@ There is also a demo of calling a custom API, which is in the Joonasw.ManagedIde
 
 ## Setup instructions
 
-For local development you will need the 2.2 .NET Core SDK (currently preview 2).
+For local development you will need the [2.2 .NET Core SDK](https://www.microsoft.com/net/download/dotnet-core/2.2)
+(currently preview 2).
 If you use Visual Studio, currently you'd need VS 2017 Preview (15.9.0 preview 2).
 
 For local development, you can give your user account access to the resources.
@@ -28,7 +29,11 @@ This will ensure that you are always acquiring tokens for the correct Azure AD t
 To run the app in Azure, you'll need at least one Web App to run the main app.
 And don't forget to enable Managed Identity on the app.
 This will generate a Service Principal that you'll be giving access to.
-At the moment, you need to install the ASP.NET Core 2.2 Preview 2 x86 Runtime extension on the App Service.
+At the moment, you need to install the
+*ASP.NET Core 2.2 (x86) Runtime* extension on the App Service.
+You could also run the app using 2.1,
+but using the SQL Database will not be possible there
+as the `ConnectionString` property does not exist on `SqlConnection`.
 
 ### Key Vault
 
@@ -54,6 +59,10 @@ to your user account and/or the generated managed identity service principal.
 
 Now you should be able to run the app and see the secret value in the Key Vault tab.
 
+An extension method ([UseAzureKeyVaultConfiguration](https://github.com/juunas11/Joonasw.ManagedIdentityDemos/blob/master/Joonasw.ManagedIdentityDemos/Extensions/WebHostBuilderExtensions.cs))
+is used in [Program.cs](https://github.com/juunas11/Joonasw.ManagedIdentityDemos/blob/master/Joonasw.ManagedIdentityDemos/Program.cs)
+to add the Key Vault configuration source.
+
 ### Blob Storage
 
 Documentation: https://docs.microsoft.com/en-us/azure/storage/common/storage-auth-aad
@@ -63,16 +72,23 @@ My article on the subject: https://joonasw.net/view/azure-ad-authentication-with
 This time you'll need to a Storage Account.
 The settings that affect this demo are:
 
-* Demo:StorageAccountName
-* Demo:StorageContainerName
-* Demo:StorageBlobName
+```json
+{
+  "Demo": {
+    "StorageAccountName": "your-storage-account-name",
+	"StorageContainerName": "your-blob-container-name",
+	"StorageBlobName": "name-of-file-in-container"
+  }
+}
+```
 
 These should be fairly self-explanatory.
 The first one is the name of the Storage account,
-the second a blob container that you need to create,
-and the last the name of a file that you add to that container.
+the second a blob container that you have created,
+and the last the name of a file that you have added to that container.
 
-Once you have done those things add one of the following roles to either your user account
+Once you have done those things,
+add one of the following roles to either your user account
 and/or the generated service principal:
 
 * Storage Blob Data Reader
@@ -83,27 +99,42 @@ The role is added via the Access Control (IAM) tab of the Storage account or the
 After doing these things, the Storage demo tab should work.
 It will load the files contents and display them as text on the view.
 
+You can see how it uses the Storage SDK in
+the `AccessStorage` function of [DemoService](https://github.com/juunas11/Joonasw.ManagedIdentityDemos/blob/master/Joonasw.ManagedIdentityDemos/Services/DemoService.cs).
+
 ### SQL Database
 
 First you'll need an Azure SQL Database of course.
 The explanation on how to enable Azure AD authentication there is a bit long.
 You can read the official documentation here: https://docs.microsoft.com/en-us/azure/sql-database/sql-database-aad-authentication-configure.
 
-The main thing that you need to achieve is add your user account and/or service principal read access to a database.
+The main thing that you need to achieve is
+add your user account and/or service principal read access to a database.
 The article above will tell you how to add your user account there.
 Adding service principals is not so straightforward.
-You need to add the service principal to an Azure AD group, and then add this group access in the SQL database.
-To do that, you need to use PowerShell: https://docs.microsoft.com/en-us/powershell/module/azuread/?view=azureadps-2.0.
+You need to add the service principal to an Azure AD group,
+and then add this group access in the SQL database.
+To do that, you need to use the Azure AD PowerShell module: https://docs.microsoft.com/en-us/powershell/module/azuread/?view=azureadps-2.0.
 
 ```ps
+#Login to Azure Active Directory
 Connect-AzureAD
 
+#Enter your App Service name in the SearchString
+$msiSpId = (Get-AzureADServicePrincipal -SearchString 'your-app-name').ObjectId
+
+#Alternatively you can find the id from
 #Enterprise Applications -> All applications + search filter -> Apply -> Find app -> Properties -> Object id
 #or check from e.g. the App Service resource via Resource Explorer
-$msiSpId = '82c55921-c5a6-4c26-847a-4a3cb2620d06'
+# $msiSpId = '82c55921-c5a6-4c26-847a-4a3cb2620d06'
 
-#You'll need the Azure AD Group's Object Id (you can get it from the group's Properties)
-$sqlGroupId = 'a3941883-6d1d-4460-84cd-446562f26815'
+#Create group that will be given access
+$sqlGroup = New-AzureADGroup -DisplayName "SQL Table Readers" -Description "Readers of MSI demo SQL DB" -SecurityEnabled $true -MailEnabled $false -MailNickName "sqltablereaders"
+$sqlGroupId = $sqlGroup.ObjectId
+#If you have an existing group, you can get its id like:
+#$sqlGroupId = (Get-AzureADGroup -SearchString "SQL Table Readers").ObjectId
+
+#Add the service principal to the group
 Add-AzureADGroupMember -ObjectId $sqlGroupId -RefObjectId $msiSpId
 ```
 
@@ -129,14 +160,11 @@ CREATE USER [SQL Table Readers] FROM EXTERNAL PROVIDER;
 GRANT SELECT ON dbo.Test TO [SQL Table Readers];
 
 -- Here is how you would add access to a user
-CREATE USER [firstname.lastname@yourtenant.onmicrosoft.com] FROM EXTERNAL PROVIDER;
-GRANT SELECT ON dbo.Test TO [firstname.lastname@yourtenant.onmicrosoft.com];
+--CREATE USER [firstname.lastname@yourtenant.onmicrosoft.com] FROM EXTERNAL PROVIDER;
+--GRANT SELECT ON dbo.Test TO [firstname.lastname@yourtenant.onmicrosoft.com];
 ```
 
-Then you can setup the configuration settings needed for the SQL database:
-
-* Demo:SqlConnectionString
-
+Then you can setup the configuration settings needed for the SQL database.
 Here is an example value for the connection string:
 
 ```json
@@ -176,7 +204,96 @@ If you run the app on Azure, make sure you enable Web Sockets so the listener wo
 
 That's it for the configuration.
 The demo should now work, and consists of two parts.
-The listener tab hooks up th
+The listener tab connects to the SignalR hub using a WebSocket connection
+and prints all received messages.
+The sender tab sends messages to the queue.
+
+Sending messages is done in the `SendServiceBusQueueMessage` function of [DemoService](https://github.com/juunas11/Joonasw.ManagedIdentityDemos/blob/master/Joonasw.ManagedIdentityDemos/Services/DemoService.cs).
+Receiving messages happens in the background service [QueueListenerService](https://github.com/juunas11/Joonasw.ManagedIdentityDemos/blob/master/Joonasw.ManagedIdentityDemos/Background/QueueListenerService.cs).
 
 ### Custom API
 
+My article on this: https://joonasw.net/view/calling-your-apis-with-aad-msi-using-app-permissions
+
+The last demo calls an API we have made.
+For this demo, you will need to register an application in Azure AD
+that represents the API.
+To do this, go to *Azure Active Directory -> App registrations*.
+When creating the registration, make sure the type is *Web app/API*.
+The sign-on URL can be `https://localhost`, it won't be used anyway.
+
+After creating it, grab the *Application Id*.
+Also go to the *Properties* and grab the *Application ID URI*.
+Enter the ID URI in the front-end application's settings:
+
+```json
+{
+  "Demo": {
+    "CustomApiApplicationIdUri": "your-api-id-uri"
+  }
+}
+```
+
+Then set the following settings in the API app's configuration:
+
+```json
+{
+  "Authentication": {
+    "ClientId": "your-app-application-id",
+    "ApplicationIdUri": "your-app-application-id-uri",
+    "Authority": "https://login.microsoftonline.com/your-tenant-id"
+  }
+}
+```
+
+The first two settings are the bits of info we got after creating the app.
+The authority should contain your Azure AD's id.
+You can find it from *Azure Active Directory -> Properties*.
+
+To run the demo on Azure, you will need an additional Web App to run the API.
+
+Now technically we could run the sample.
+But if we want to do things properly, we will want to specify an application permission
+on our API that the front-end then uses.
+This way we can limit what the app can do.
+
+As a sample, here is the application permission defined in the API *Manifest*:
+
+```json
+{
+  "appRoles": [
+    {
+      "allowedMemberTypes": [
+        "Application"
+      ],
+      "displayName": "Read all things",
+      "id": "32028ccd-3212-4f39-3212-beabd6787d81",
+      "isEnabled": true,
+      "description": "Allow the application to read all things as itself.",
+      "value": "Things.Read.All"
+    }
+  ]
+}
+```
+
+This can then be assigned to the generated service principal with PowerShell:
+
+```ps
+#Login to Azure AD
+Connect-AzureAD
+
+#Id of the role specified in the manifet
+$roleId = '32028ccd-3212-4f39-3212-beabd6787d81'
+
+#Enter your App Service name in the SearchString
+$msiSpId = (Get-AzureADServicePrincipal -SearchString 'your-app-name').ObjectId
+
+#Enter the name of the app registration for the API in the SearchString
+$apiSpId = (Get-AzureADServicePrincipal -SearchString 'your-api-name').ObjectId
+
+New-AzureADServiceAppRoleAssignment -ObjectId $msiSpId -Id $roleId -PrincipalId $msiSpId -ResourceId $apiSpId
+```
+
+Now we can run the API and front-end app,
+and call the API from the Custom API tab.
+The call is implemented in the `AccessCustomApi` function of [DemoService](https://github.com/juunas11/Joonasw.ManagedIdentityDemos/blob/master/Joonasw.ManagedIdentityDemos/Services/DemoService.cs).
