@@ -76,8 +76,8 @@ The settings that affect this demo are:
 {
   "Demo": {
     "StorageAccountName": "your-storage-account-name",
-	"StorageContainerName": "your-blob-container-name",
-	"StorageBlobName": "name-of-file-in-container"
+    "StorageContainerName": "your-blob-container-name",
+    "StorageBlobName": "name-of-file-in-container"
   }
 }
 ```
