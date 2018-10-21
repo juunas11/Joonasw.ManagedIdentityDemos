@@ -9,9 +9,17 @@ namespace Joonasw.ManagedIdentityDemos.Services
     {
         private readonly string _managedIdentityTenantId;
 
-        public ManagedIdentityServiceBusTokenProvider(string managedIdentityTenantId)
+        public ManagedIdentityServiceBusTokenProvider(string managedIdentityTenantId = null)
         {
-            _managedIdentityTenantId = managedIdentityTenantId;
+            if (string.IsNullOrEmpty(managedIdentityTenantId))
+            {
+                // Ensure tenant id is null if none given
+                _managedIdentityTenantId = null;
+            }
+            else
+            {
+                _managedIdentityTenantId = managedIdentityTenantId;
+            }
         }
 
         public override async Task<SecurityToken> GetTokenAsync(string appliesTo, TimeSpan timeout)
@@ -23,14 +31,7 @@ namespace Joonasw.ManagedIdentityDemos.Services
         private async Task<string> GetAccessToken(string resource)
         {
             var authProvider = new AzureServiceTokenProvider();
-            string tenantId = _managedIdentityTenantId;
-
-            if (tenantId != null && tenantId.Length == 0)
-            {
-                tenantId = null; //We want to clearly indicate to the provider if we do not specify a tenant, so no empty strings
-            }
-
-            return await authProvider.GetAccessTokenAsync(resource, tenantId);
+            return await authProvider.GetAccessTokenAsync(resource, _managedIdentityTenantId);
         }
     }
 }
