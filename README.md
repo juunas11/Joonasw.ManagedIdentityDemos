@@ -1,6 +1,6 @@
 # Azure Managed Identity demo collection
 
-This is an ASP.NET Core 2.2 (preview 2) app which demonstrates usage
+This is an ASP.NET Core 2.2 app which demonstrates usage
 of some Azure services with Managed Identity authentication:
 
 * Key Vault for configuration data
@@ -14,7 +14,7 @@ There is also a demo of calling a custom API, which is in the Joonasw.ManagedIde
 
 For local development you will need the [2.2 .NET Core SDK](https://www.microsoft.com/net/download/dotnet-core/2.2)
 (currently preview 2).
-If you use Visual Studio, currently you'd need VS 2017 Preview (15.9.0 preview 2).
+If you use Visual Studio, currently you'd need at least VS 2017.
 
 For local development, you can give your user account access to the resources.
 You will need to login to the az CLI and ensure you are logged in to the right Azure AD tenant.
