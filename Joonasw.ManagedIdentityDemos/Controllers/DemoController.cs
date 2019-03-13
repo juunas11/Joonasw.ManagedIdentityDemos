@@ -44,6 +44,7 @@ namespace Joonasw.ManagedIdentityDemos.Controllers
         public IActionResult ServiceBus() => View();
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ServiceBusSend()
         {
             await _demoService.SendServiceBusQueueMessage();

@@ -91,9 +91,7 @@ namespace Joonasw.ManagedIdentityDemos.Services
                 await conn.OpenAsync();
 
                 SqlCommand cmd = conn.CreateCommand();
-
                 cmd.CommandText = "SELECT [Id], [Value] FROM [dbo].[Test]";
-
                 var reader = await cmd.ExecuteReaderAsync();
 
                 if (reader.HasRows)
@@ -129,7 +127,6 @@ namespace Joonasw.ManagedIdentityDemos.Services
             req.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
             var res = await HttpClient.SendAsync(req);
-
             string resJson = await res.Content.ReadAsStringAsync();
 
             return new CustomServiceViewModel
