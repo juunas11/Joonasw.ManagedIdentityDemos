@@ -111,32 +111,16 @@ You can read the official documentation here: https://docs.microsoft.com/en-us/a
 The main thing that you need to achieve is
 add your user account and/or service principal read access to a database.
 The article above will tell you how to add your user account there.
-Adding service principals is not so straightforward.
-You need to add the service principal to an Azure AD group,
+
+Adding service principals used to be a bit difficult.
+You needed to add the service principal to an Azure AD group,
 and then add this group access in the SQL database.
-To do that, you need to use the Azure AD PowerShell module: https://docs.microsoft.com/en-us/powershell/module/azuread/?view=azureadps-2.0.
+Not anymore.
+You can now give the service principal access on SQL just by using its name.
 
-```ps
-#Login to Azure Active Directory
-Connect-AzureAD
-
-#Enter your App Service name in the SearchString
-$msiSpId = (Get-AzureADServicePrincipal -SearchString 'your-app-name').ObjectId
-
-#Alternatively you can find the id from
-#Enterprise Applications -> All applications + search filter -> Apply -> Find app -> Properties -> Object id
-#or check from e.g. the App Service resource via Resource Explorer
-# $msiSpId = '82c55921-c5a6-4c26-847a-4a3cb2620d06'
-
-#Create group that will be given access
-$sqlGroup = New-AzureADGroup -DisplayName "SQL Table Readers" -Description "Readers of MSI demo SQL DB" -SecurityEnabled $true -MailEnabled $false -MailNickName "sqltablereaders"
-$sqlGroupId = $sqlGroup.ObjectId
-#If you have an existing group, you can get its id like:
-#$sqlGroupId = (Get-AzureADGroup -SearchString "SQL Table Readers").ObjectId
-
-#Add the service principal to the group
-Add-AzureADGroupMember -ObjectId $sqlGroupId -RefObjectId $msiSpId
-```
+You can find the service principal's name in the Azure Portal (under Azure Active Directory -> Enterprise applications).
+It'll be e.g. your App Service's name if it is system-assigned,
+or the name you chose if it is a user-assigned identity.
 
 The app does not generate the database table,
 so here is an SQL script you can run after doing the Azure AD admin setup
@@ -155,9 +139,9 @@ INSERT INTO Test ([Value]) VALUES ('Test');
 INSERT INTO Test ([Value]) VALUES ('Test 2');
 INSERT INTO Test ([Value]) VALUES ('Test 3');
 
--- SQL Table Readers is the name of the group in Azure AD
-CREATE USER [SQL Table Readers] FROM EXTERNAL PROVIDER;
-GRANT SELECT ON dbo.Test TO [SQL Table Readers];
+-- joonasmsitests is the name of the service principal in Azure AD
+CREATE USER [joonasmsitests] FROM EXTERNAL PROVIDER;
+GRANT SELECT ON dbo.Test TO [joonasmsitests];
 
 -- Here is how you would add access to a user
 --CREATE USER [firstname.lastname@yourtenant.onmicrosoft.com] FROM EXTERNAL PROVIDER;
