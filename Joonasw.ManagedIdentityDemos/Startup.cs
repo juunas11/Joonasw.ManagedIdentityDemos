@@ -39,6 +39,7 @@ namespace Joonasw.ManagedIdentityDemos
                 o.EnableQuickPulseMetricStream = true;
                 o.InstrumentationKey = Configuration["ApplicationInsights:InstrumentationKey"];
             });
+            services.AddHttpClient(HttpClients.CustomApi);
         }
 
         public void Configure(IApplicationBuilder app, Microsoft.AspNetCore.Hosting.IHostingEnvironment env)

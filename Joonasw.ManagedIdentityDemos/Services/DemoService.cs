@@ -22,14 +22,18 @@ namespace Joonasw.ManagedIdentityDemos.Services
 {
     public class DemoService : IDemoService
     {
-        private static readonly HttpClient HttpClient = new HttpClient();
         private readonly DemoSettings _settings;
         private readonly MsiDbContext _dbContext;
+        private readonly HttpClient _httpClient;
 
-        public DemoService(IOptionsSnapshot<DemoSettings> settings, MsiDbContext dbContext)
+        public DemoService(
+            IOptionsSnapshot<DemoSettings> settings,
+            MsiDbContext dbContext,
+            IHttpClientFactory httpClientFactory)
         {
             _settings = settings.Value;
             _dbContext = dbContext;
+            _httpClient = httpClientFactory.CreateClient(HttpClients.CustomApi);
         }
 
         public async Task<StorageViewModel> AccessStorage()
@@ -126,7 +130,7 @@ namespace Joonasw.ManagedIdentityDemos.Services
                 new AuthenticationHeaderValue("Bearer", accessToken);
             req.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-            var res = await HttpClient.SendAsync(req);
+            var res = await _httpClient.SendAsync(req);
             string resJson = await res.Content.ReadAsStringAsync();
 
             return new CustomServiceViewModel
