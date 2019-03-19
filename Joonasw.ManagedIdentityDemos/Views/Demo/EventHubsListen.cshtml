@@ -1,16 +1,16 @@
 ﻿
 @{
-    ViewData["Title"] = "Azure Service Bus";
+    ViewData["Title"] = "Event Hubs";
 }
 
-<h2>Azure Service Bus listener</h2>
+<h2>Event Hubs listener</h2>
 
 <ul id="messages"></ul>
 
 @section Scripts{
     <script src="~/lib/signalr/signalr.js"></script>
     <script>
-        var connection = new signalR.HubConnectionBuilder().withUrl("/queueMessages").build();
+        var connection = new signalR.HubConnectionBuilder().withUrl("/eventHubMessages").build();
 
         connection.on("ReceiveMessage", function (message) {
             var li = document.createElement("li");

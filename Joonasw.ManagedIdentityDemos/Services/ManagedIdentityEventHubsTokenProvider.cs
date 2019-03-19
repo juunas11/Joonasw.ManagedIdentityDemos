@@ -1,22 +1,22 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Microsoft.Azure.ServiceBus.Primitives;
+using Microsoft.Azure.EventHubs;
 using Microsoft.Azure.Services.AppAuthentication;
 
 namespace Joonasw.ManagedIdentityDemos.Services
 {
-    public class ManagedIdentityServiceBusTokenProvider : TokenProvider
+    public class ManagedIdentityEventHubsTokenProvider : ITokenProvider
     {
         private readonly string _managedIdentityTenantId;
 
-        public ManagedIdentityServiceBusTokenProvider(string managedIdentityTenantId)
+        public ManagedIdentityEventHubsTokenProvider(string managedIdentityTenantId)
         {
             _managedIdentityTenantId = managedIdentityTenantId;
         }
 
-        public override async Task<SecurityToken> GetTokenAsync(string appliesTo, TimeSpan timeout)
+        public async Task<SecurityToken> GetTokenAsync(string appliesTo, TimeSpan timeout)
         {
-            string accessToken = await GetAccessToken("https://servicebus.azure.net/");
+            string accessToken = await GetAccessToken("https://eventhubs.azure.net/");
             return new JsonSecurityToken(accessToken, appliesTo);
         }
 

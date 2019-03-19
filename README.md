@@ -281,3 +281,43 @@ New-AzureADServiceAppRoleAssignment -ObjectId $msiSpId -Id $roleId -PrincipalId 
 Now we can run the API and front-end app,
 and call the API from the Custom API tab.
 The call is implemented in the `AccessCustomApi` function of [DemoService](https://github.com/juunas11/Joonasw.ManagedIdentityDemos/blob/master/Joonasw.ManagedIdentityDemos/Services/DemoService.cs).
+
+## Azure Event Hubs
+
+To run the Event Hubs demos, you'll of course need an Event Hubs namespace.
+Create an Event Hub there.
+You also need to create a Storage account (or use the same one from the other demo).
+This Storage account is used by the listener to keep locks on the partitions.
+Then, configure the relevant settings in appsettings.json:
+
+```json
+{
+  "Demo": {
+    "EventHubNamespace": "your-namespace-name",
+    "EventHubName": "your-hub-name",
+    "EventHubStorageContainerName": "mi-demos-leases"
+  }
+}
+```
+
+You can leave the container name as it is or change it to another.
+
+Then, add your user account/the generated service principal to the Contributor/Owner role on the
+Event Hubs namespace via the Access Control (IAM) tab.
+
+You also need to setup Key Vault as a configuration provider following the Key Vault
+section instructions.
+
+You'll need a secret named **Demo--EventHubsStorageConnectionString**,
+containing a connection string for the Storage account you want to use for holding the partition locks.
+
+If you run the app on Azure, make sure you enable Web Sockets so the listener works.
+
+That's it for the configuration.
+The demo should now work, and consists of two parts.
+The listener tab connects to the SignalR hub using a WebSocket connection
+and prints all received messages.
+The sender tab sends messages to the queue.
+
+Sending messages is done in the `SendEventHubsMessage` function of [DemoService](https://github.com/juunas11/Joonasw.ManagedIdentityDemos/blob/master/Joonasw.ManagedIdentityDemos/Services/DemoService.cs).
+Receiving messages happens in the background service [EventHubsListenerService](https://github.com/juunas11/Joonasw.ManagedIdentityDemos/blob/master/Joonasw.ManagedIdentityDemos/Background/EventHubsListenerService.cs).

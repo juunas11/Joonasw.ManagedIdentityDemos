@@ -29,6 +29,7 @@ namespace Joonasw.ManagedIdentityDemos
 
             services.AddTransient<IDemoService, DemoService>();
             services.AddSingleton<IHostedService, QueueListenerService>();
+            services.AddSingleton<IHostedService, EventHubsListenerService>();
 
             services.Configure<DemoSettings>(Configuration.GetSection("Demo"));
 
@@ -59,7 +60,8 @@ namespace Joonasw.ManagedIdentityDemos
 
             app.UseSignalR(routes =>
             {
-                routes.MapHub<QueueMessageHub>("/messages");
+                routes.MapHub<QueueMessageHub>("/queueMessages");
+                routes.MapHub<EventHubMessageHub>("/eventHubMessages");
             });
 
             app.UseMvc(routes =>

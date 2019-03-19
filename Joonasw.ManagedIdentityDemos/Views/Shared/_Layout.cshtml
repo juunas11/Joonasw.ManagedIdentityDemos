@@ -34,8 +34,20 @@
                     <li><a asp-controller="Demo" asp-action="Storage">Storage</a></li>
                     <li><a asp-controller="Demo" asp-action="SqlDatabase">SQL Database</a></li>
                     <li><a asp-controller="Demo" asp-action="CustomService">Custom API</a></li>
-                    <li><a asp-controller="Demo" asp-action="ServiceBus">Service Bus (send)</a></li>
-                    <li><a asp-controller="Demo" asp-action="ServiceBusListen">Service Bus (listen)</a></li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Service Bus Queue <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a asp-controller="Demo" asp-action="ServiceBus">Send</a></li>
+                            <li><a asp-controller="Demo" asp-action="ServiceBusListen">Listen</a></li>
+                        </ul>
+                    </li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Event Hub <span class="caret"></span></a>
+                        <ul class="dropdown-menu">
+                            <li><a asp-controller="Demo" asp-action="EventHubs">Send</a></li>
+                            <li><a asp-controller="Demo" asp-action="EventHubsListen">Listen</a></li>
+                        </ul>
+                    </li>
                 </ul>
             </div>
         </div>

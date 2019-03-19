@@ -17,6 +17,7 @@ using Microsoft.WindowsAzure.Storage.Auth;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Newtonsoft.Json;
 using Microsoft.Azure.ServiceBus;
+using Microsoft.Azure.EventHubs;
 
 namespace Joonasw.ManagedIdentityDemos.Services
 {
@@ -151,6 +152,21 @@ namespace Joonasw.ManagedIdentityDemos.Services
             var message = new Message(
                 Encoding.UTF8.GetBytes($"Test message {Guid.NewGuid()} ({DateTime.UtcNow:HH:mm:ss})"));
             await queueClient.SendAsync(message);
+        }
+
+        public async Task SendEventHubsMessage()
+        {
+            string hubNamespace = _settings.EventHubNamespace;
+            var endpoint = new Uri($"sb://{hubNamespace}.servicebus.windows.net/");
+            string hubName = _settings.EventHubName;
+            var client = EventHubClient.Create(
+                endpoint,
+                hubName,
+                new ManagedIdentityEventHubsTokenProvider(_settings.ManagedIdentityTenantId));
+            // You can also do this:
+            // var client = EventHubClient.CreateWithManagedServiceIdentity(endpoint, hubName);
+            var bytes = Encoding.UTF8.GetBytes($"Test message {Guid.NewGuid()} ({DateTime.UtcNow:HH:mm:ss})");
+            await client.SendAsync(new EventData(bytes));
         }
 
         private async Task<string> GetAccessToken(string resource)

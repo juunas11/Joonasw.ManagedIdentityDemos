@@ -9,5 +9,6 @@ namespace Joonasw.ManagedIdentityDemos.Contracts
         Task<SqlDatabaseViewModel> AccessSqlDatabase();
         Task<CustomServiceViewModel> AccessCustomApi();
         Task SendServiceBusQueueMessage();
+        Task SendEventHubsMessage();
     }
 }

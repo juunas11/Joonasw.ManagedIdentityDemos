@@ -53,7 +53,25 @@ namespace Joonasw.ManagedIdentityDemos.Controllers
             {
                 TempData.Add(MessageTempDataKey, "Message sent");
             }
+
             return RedirectToAction(nameof(ServiceBus));
+        }
+
+        [HttpGet, HttpHead]
+        public IActionResult EventHubs() => View();
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EventHubsSend()
+        {
+            await _demoService.SendEventHubsMessage();
+
+            if (!TempData.ContainsKey(MessageTempDataKey))
+            {
+                TempData.Add(MessageTempDataKey, "Message sent");
+            }
+
+            return RedirectToAction(nameof(EventHubs));
         }
 
         [HttpGet, HttpHead]
@@ -72,6 +90,9 @@ namespace Joonasw.ManagedIdentityDemos.Controllers
 
         [HttpGet, HttpHead]
         public IActionResult ServiceBusListen() => View();
+
+        [HttpGet, HttpHead]
+        public IActionResult EventHubsListen() => View();
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()

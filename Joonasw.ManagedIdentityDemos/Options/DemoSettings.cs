@@ -1,4 +1,6 @@
-﻿namespace Joonasw.ManagedIdentityDemos.Options
+﻿using System.Runtime.Serialization;
+
+namespace Joonasw.ManagedIdentityDemos.Options
 {
     public class DemoSettings
     {
@@ -17,5 +19,10 @@
 
         public string ServiceBusNamespace { get; set; }
         public string ServiceBusQueueName { get; set; }
+
+        public string EventHubNamespace { get; set; }
+        public string EventHubName { get; set; }
+        public string EventHubStorageConnectionString { get; set; }
+        public string EventHubStorageContainerName { get; set; }
     }
 }
