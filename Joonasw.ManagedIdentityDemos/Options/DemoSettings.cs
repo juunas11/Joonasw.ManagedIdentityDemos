@@ -24,5 +24,8 @@ namespace Joonasw.ManagedIdentityDemos.Options
         public string EventHubName { get; set; }
         public string EventHubStorageConnectionString { get; set; }
         public string EventHubStorageContainerName { get; set; }
+
+        public string DataLakeStoreName { get; set; }
+        public string DataLakeFileName { get; set; }
     }
 }

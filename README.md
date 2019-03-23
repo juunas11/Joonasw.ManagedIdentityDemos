@@ -321,3 +321,33 @@ The sender tab sends messages to the queue.
 
 Sending messages is done in the `SendEventHubsMessage` function of [DemoService](https://github.com/juunas11/Joonasw.ManagedIdentityDemos/blob/master/Joonasw.ManagedIdentityDemos/Services/DemoService.cs).
 Receiving messages happens in the background service [EventHubsListenerService](https://github.com/juunas11/Joonasw.ManagedIdentityDemos/blob/master/Joonasw.ManagedIdentityDemos/Background/EventHubsListenerService.cs).
+
+## Azure Data Lake Storage
+
+You will need an Azure Data Lake Storage (gen 1) first.
+The settings that affect this demo are:
+
+```json
+{
+  "Demo": {
+    "DataLakeStoreName": "name-of-your-data-lake-store",
+    "DataLakeFileName": "name-of-file-at-root-of-store"
+  }
+}
+```
+
+For the first one specify the name of the Data Lake Storage you created.
+It will be used to construct the full domain name in `DemoService`.
+Upload a text file to the root of the store and specify its name in the second setting.
+
+Data Lake permissions can be set up in multiple ways,
+check the docs for more info: [https://docs.microsoft.com/en-us/azure/data-lake-store/data-lake-store-access-control](https://docs.microsoft.com/en-us/azure/data-lake-store/data-lake-store-access-control).
+
+What worked for me was giving Read access to your user account and/or the generated service principal on the file,
+and also Execute access on the root.
+You can do this through the *Access* buttons.
+
+The Data Lake demo should then work.
+It will show the file contents in the view.
+
+The code accessing Data Lake can be found in the `AccessDataLake` function of [DemoService](https://github.com/juunas11/Joonasw.ManagedIdentityDemos/blob/master/Joonasw.ManagedIdentityDemos/Services/DemoService.cs).

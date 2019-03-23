@@ -94,6 +94,13 @@ namespace Joonasw.ManagedIdentityDemos.Controllers
         [HttpGet, HttpHead]
         public IActionResult EventHubsListen() => View();
 
+        [HttpGet, HttpHead]
+        public async Task<IActionResult> DataLake()
+        {
+            var model = await _demoService.AccessDataLake();
+            return View(model);
+        }
+
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {

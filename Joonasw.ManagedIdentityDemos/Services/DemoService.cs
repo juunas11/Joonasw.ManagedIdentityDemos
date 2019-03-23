@@ -18,6 +18,8 @@ using Microsoft.WindowsAzure.Storage.Blob;
 using Newtonsoft.Json;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Azure.EventHubs;
+using Microsoft.Azure.DataLake.Store;
+using System.IO;
 
 namespace Joonasw.ManagedIdentityDemos.Services
 {
@@ -167,6 +169,25 @@ namespace Joonasw.ManagedIdentityDemos.Services
             // var client = EventHubClient.CreateWithManagedServiceIdentity(endpoint, hubName);
             var bytes = Encoding.UTF8.GetBytes($"Test message {Guid.NewGuid()} ({DateTime.UtcNow:HH:mm:ss})");
             await client.SendAsync(new EventData(bytes));
+        }
+
+        public async Task<DataLakeViewModel> AccessDataLake()
+        {
+            string token = await GetAccessToken("https://datalake.azure.net/");
+            string accountFqdn = $"{_settings.DataLakeStoreName}.azuredatalakestore.net";
+            var client = AdlsClient.CreateClient(accountFqdn, $"Bearer {token}");
+
+            string filename = _settings.DataLakeFileName;
+            string content = null;
+            using (var reader = new StreamReader(await client.GetReadStreamAsync(filename)))
+            {
+                content = await reader.ReadToEndAsync();
+            }
+            
+            return new DataLakeViewModel
+            {
+                FileContent = content
+            };
         }
 
         private async Task<string> GetAccessToken(string resource)
