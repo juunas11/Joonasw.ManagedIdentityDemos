@@ -14,12 +14,12 @@ namespace Joonasw.ManagedIdentityDemos.Background
     public class EventHubsListenerService : HostedService, IEventProcessorFactory
     {
         private readonly TelemetryClient _telemetryClient;
-        private readonly IHubContext<EventHubMessageHub> _messageHub;
+        private readonly IHubContext<EventHubMessageHub, IClientReceiver> _messageHub;
         private readonly DemoSettings _demoSettings;
 
         public EventHubsListenerService(
             TelemetryClient telemetryClient,
-            IHubContext<EventHubMessageHub> messageHub,
+            IHubContext<EventHubMessageHub, IClientReceiver> messageHub,
             IOptions<DemoSettings> demoSettings)
         {
             _telemetryClient = telemetryClient;

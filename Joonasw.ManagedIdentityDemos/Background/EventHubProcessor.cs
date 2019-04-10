@@ -13,9 +13,9 @@ namespace Joonasw.ManagedIdentityDemos.Background
     public class EventHubProcessor : IEventProcessor
     {
         private readonly TelemetryClient _telemetryClient;
-        private readonly IHubContext<EventHubMessageHub> _messageHub;
+        private readonly IHubContext<EventHubMessageHub, IClientReceiver> _messageHub;
 
-        public EventHubProcessor(TelemetryClient telemetryClient, IHubContext<EventHubMessageHub> messageHub)
+        public EventHubProcessor(TelemetryClient telemetryClient, IHubContext<EventHubMessageHub, IClientReceiver> messageHub)
         {
             _telemetryClient = telemetryClient;
             _messageHub = messageHub;
@@ -27,7 +27,7 @@ namespace Joonasw.ManagedIdentityDemos.Background
             {
                 var data = Encoding.UTF8.GetString(
                     eventData.Body.Array, eventData.Body.Offset, eventData.Body.Count);
-                await _messageHub.Clients.All.SendAsync("ReceiveMessage", data);
+                await _messageHub.Clients.All.ReceiveMessage(data);
             }
 
             await context.CheckpointAsync();

@@ -13,12 +13,12 @@ namespace Joonasw.ManagedIdentityDemos.Background
     public class QueueListenerService : HostedService
     {
         private readonly TelemetryClient _telemetryClient;
-        private readonly IHubContext<QueueMessageHub> _messageHub;
+        private readonly IHubContext<QueueMessageHub, IClientReceiver> _messageHub;
         private readonly DemoSettings _settings;
 
         public QueueListenerService(
             TelemetryClient telemetryClient,
-            IHubContext<QueueMessageHub> messageHub,
+            IHubContext<QueueMessageHub, IClientReceiver> messageHub,
             IOptions<DemoSettings> demoSettings)
         {
             _telemetryClient = telemetryClient;
@@ -59,7 +59,7 @@ namespace Joonasw.ManagedIdentityDemos.Background
         private async Task HandleMessage(Message msg, CancellationToken ct)
         {
             string message = Encoding.UTF8.GetString(msg.Body);
-            await _messageHub.Clients.All.SendAsync("ReceiveMessage", message, ct);
+            await _messageHub.Clients.All.ReceiveMessage(message);
         }
 
         private Task HandleException(ExceptionReceivedEventArgs errArgs)
