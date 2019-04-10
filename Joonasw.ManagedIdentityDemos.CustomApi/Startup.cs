@@ -36,7 +36,7 @@ namespace Joonasw.ManagedIdentityDemos.CustomApi
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(o =>
                 {
-                    var settings = Configuration.GetSection("Authentication").Get<AuthenticationSettings>();
+                    AuthenticationSettings settings = Configuration.GetSection("Authentication").Get<AuthenticationSettings>();
 
                     o.Authority = settings.Authority;
                     o.TokenValidationParameters = new TokenValidationParameters

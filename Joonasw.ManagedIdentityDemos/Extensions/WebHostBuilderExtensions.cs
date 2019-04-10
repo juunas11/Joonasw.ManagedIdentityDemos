@@ -12,7 +12,7 @@ namespace Joonasw.ManagedIdentityDemos.Extensions
         {
             return webHostBuilder.ConfigureAppConfiguration(builder =>
             {
-                var config = builder.Build();
+                IConfigurationRoot config = builder.Build();
                 string keyVaultUrl = config["Demo:KeyVaultBaseUrl"];
 
                 if (!string.IsNullOrEmpty(keyVaultUrl))

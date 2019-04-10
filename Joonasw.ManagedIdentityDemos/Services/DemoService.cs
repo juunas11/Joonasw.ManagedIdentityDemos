@@ -87,7 +87,9 @@ namespace Joonasw.ManagedIdentityDemos.Services
                 .ToListAsync();
         }
 
+#pragma warning disable IDE0051 // Remove unused private members, can choose to use this
         private async Task<List<SqlRowModel>> GetSqlRowsWithAdoNet(string accessToken)
+#pragma warning restore IDE0051 // Remove unused private members
         {
             var results = new List<SqlRowModel>();
 
@@ -99,7 +101,7 @@ namespace Joonasw.ManagedIdentityDemos.Services
 
                 SqlCommand cmd = conn.CreateCommand();
                 cmd.CommandText = "SELECT [Id], [Value] FROM [dbo].[Test]";
-                var reader = await cmd.ExecuteReaderAsync();
+                SqlDataReader reader = await cmd.ExecuteReaderAsync();
 
                 if (reader.HasRows)
                 {
@@ -133,7 +135,7 @@ namespace Joonasw.ManagedIdentityDemos.Services
                 new AuthenticationHeaderValue("Bearer", accessToken);
             req.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-            var res = await _httpClient.SendAsync(req);
+            HttpResponseMessage res = await _httpClient.SendAsync(req);
             string resJson = await res.Content.ReadAsStringAsync();
 
             return new CustomServiceViewModel
@@ -167,7 +169,7 @@ namespace Joonasw.ManagedIdentityDemos.Services
                 new ManagedIdentityEventHubsTokenProvider(_settings.ManagedIdentityTenantId));
             // You can also do this:
             // var client = EventHubClient.CreateWithManagedServiceIdentity(endpoint, hubName);
-            var bytes = Encoding.UTF8.GetBytes($"Test message {Guid.NewGuid()} ({DateTime.UtcNow:HH:mm:ss})");
+            byte[] bytes = Encoding.UTF8.GetBytes($"Test message {Guid.NewGuid()} ({DateTime.UtcNow:HH:mm:ss})");
             await client.SendAsync(new EventData(bytes));
         }
 

@@ -97,7 +97,7 @@ namespace Joonasw.ManagedIdentityDemos.Controllers
         [HttpGet, HttpHead]
         public async Task<IActionResult> DataLake()
         {
-            var model = await _demoService.AccessDataLake();
+            DataLakeViewModel model = await _demoService.AccessDataLake();
             return View(model);
         }
 

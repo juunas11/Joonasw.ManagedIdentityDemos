@@ -23,9 +23,9 @@ namespace Joonasw.ManagedIdentityDemos.Background
 
         public async Task ProcessEventsAsync(PartitionContext context, IEnumerable<EventData> messages)
         {
-            foreach (var eventData in messages)
+            foreach (EventData eventData in messages)
             {
-                var data = Encoding.UTF8.GetString(
+                string data = Encoding.UTF8.GetString(
                     eventData.Body.Array, eventData.Body.Offset, eventData.Body.Count);
                 await _messageHub.Clients.All.ReceiveMessage(data);
             }
