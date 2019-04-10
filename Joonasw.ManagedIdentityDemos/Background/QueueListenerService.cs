@@ -45,6 +45,11 @@ namespace Joonasw.ManagedIdentityDemos.Background
                 queueClient.RegisterMessageHandler(HandleMessage, messageHandlerOptions);
                 await Task.Delay(-1, cancellationToken);
             }
+            catch (UnauthorizedException e)
+            {
+                // Log and exit
+                _telemetryClient.TrackException(e);
+            }
             finally
             {
                 await queueClient.CloseAsync();
