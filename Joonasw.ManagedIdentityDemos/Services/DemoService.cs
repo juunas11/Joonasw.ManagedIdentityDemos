@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -19,9 +18,9 @@ using Microsoft.Azure.EventHubs;
 using Microsoft.Azure.DataLake.Store;
 using System.IO;
 using Azure.Storage.Blobs;
-using Azure.Identity;
 using Azure;
 using Azure.Storage.Blobs.Models;
+using Microsoft.Data.SqlClient;
 
 namespace Joonasw.ManagedIdentityDemos.Services
 {

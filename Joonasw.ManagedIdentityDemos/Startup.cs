@@ -20,11 +20,11 @@ namespace Joonasw.ManagedIdentityDemos
             Configuration = configuration;
         }
 
-        public IConfiguration Configuration { get; }
+        private IConfiguration Configuration { get; }
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            services.AddControllersWithViews().SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
             services.AddSignalR();
 
             services.AddTransient<IDemoService, DemoService>();
@@ -43,7 +43,7 @@ namespace Joonasw.ManagedIdentityDemos
             services.AddHttpClient(HttpClients.CustomApi);
         }
 
-        public void Configure(IApplicationBuilder app, Microsoft.AspNetCore.Hosting.IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -58,17 +58,12 @@ namespace Joonasw.ManagedIdentityDemos
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
-            app.UseSignalR(routes =>
+            app.UseRouting();
+            app.UseEndpoints(o =>
             {
-                routes.MapHub<QueueMessageHub>("/queueMessages");
-                routes.MapHub<EventHubMessageHub>("/eventHubMessages");
-            });
-
-            app.UseMvc(routes =>
-            {
-                routes.MapRoute(
-                    name: "default",
-                    template: "{controller=Demo}/{action=Index}/{id?}");
+                o.MapHub<QueueMessageHub>("/queueMessages");
+                o.MapHub<EventHubMessageHub>("/eventHubMessages");
+                o.MapControllerRoute("default", "{controller=Demo}/{action=Index}/{id?}");
             });
         }
     }
