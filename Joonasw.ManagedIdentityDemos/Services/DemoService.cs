@@ -63,24 +63,20 @@ namespace Joonasw.ManagedIdentityDemos.Services
 
         public async Task<SqlDatabaseViewModel> AccessSqlDatabase()
         {
-            string accessToken = await GetAccessToken("https://database.windows.net/");
-
-            //List<SqlRowModel> results = await GetSqlRowsWithAdoNet(accessToken);
-            List<SqlRowModel> results = await GetSqlRowsWithEfCore(accessToken);
+            List<SqlRowModel> adoNetResults = await GetSqlRowsWithAdoNet();
+            List<SqlRowModel> efResults = await GetSqlRowsWithEfCore();
 
             return new SqlDatabaseViewModel
             {
-                Results = results
+                AdoNetResults = adoNetResults,
+                EfResults = efResults
             };
         }
 
-        private async Task<List<SqlRowModel>> GetSqlRowsWithEfCore(string accessToken)
+        private async Task<List<SqlRowModel>> GetSqlRowsWithEfCore()
         {
-            //Have to cast DbConnection to SqlConnection
-            //AccessToken property does not exist on the base class
-            var conn = (SqlConnection)_dbContext.Database.GetDbConnection();
-            conn.AccessToken = accessToken;
-
+            // Data / ManagedIdentityConnectionInterceptor sets up the token for the connection
+            // So no need to acquire token here
             return await _dbContext
                 .Tests
                 .Select(t => new SqlRowModel
@@ -91,14 +87,13 @@ namespace Joonasw.ManagedIdentityDemos.Services
                 .ToListAsync();
         }
 
-#pragma warning disable IDE0051 // Remove unused private members, can choose to use this
-        private async Task<List<SqlRowModel>> GetSqlRowsWithAdoNet(string accessToken)
-#pragma warning restore IDE0051 // Remove unused private members
+        private async Task<List<SqlRowModel>> GetSqlRowsWithAdoNet()
         {
             var results = new List<SqlRowModel>();
 
             using (var conn = new SqlConnection(_settings.SqlConnectionString))
             {
+                string accessToken = await GetAccessToken("https://database.windows.net/");
                 conn.AccessToken = accessToken;
 
                 await conn.OpenAsync();

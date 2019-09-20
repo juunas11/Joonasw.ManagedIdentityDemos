@@ -5,6 +5,8 @@
 
 <h2>Azure SQL Database</h2>
 
+<h3>Entity Framework Core</h3>
+
 <table class="table">
     <thead>
         <tr>
@@ -13,7 +15,27 @@
         </tr>
     </thead>
     <tbody>
-        @foreach(var row in Model.Results)
+        @foreach (var row in Model.EfResults)
+        {
+            <tr>
+                <td>@row.Id</td>
+                <td>@row.Value</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<h3>ADO.NET</h3>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Value</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var row in Model.AdoNetResults)
         {
             <tr>
                 <td>@row.Id</td>
