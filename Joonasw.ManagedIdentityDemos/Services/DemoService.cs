@@ -13,13 +13,15 @@ using Joonasw.ManagedIdentityDemos.Options;
 using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Microsoft.WindowsAzure.Storage.Auth;
-using Microsoft.WindowsAzure.Storage.Blob;
 using Newtonsoft.Json;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Azure.EventHubs;
 using Microsoft.Azure.DataLake.Store;
 using System.IO;
+using Azure.Storage.Blobs;
+using Azure.Identity;
+using Azure;
+using Azure.Storage.Blobs.Models;
 
 namespace Joonasw.ManagedIdentityDemos.Services
 {
@@ -41,20 +43,23 @@ namespace Joonasw.ManagedIdentityDemos.Services
 
         public async Task<StorageViewModel> AccessStorage()
         {
-            string accessToken = await GetAccessToken("https://storage.azure.com/");
+            var serviceClient = new BlobServiceClient(
+                new Uri($"https://{_settings.StorageAccountName}.blob.core.windows.net"),
+                new ManagedIdentityStorageTokenCredential(_settings.ManagedIdentityTenantId));
+            BlobContainerClient containerClient = serviceClient.GetBlobContainerClient(_settings.StorageContainerName);
+            BlobClient blobClient = containerClient.GetBlobClient(_settings.StorageBlobName);
+            Response<BlobDownloadInfo> response = await blobClient.DownloadAsync();
 
-            var tokenCredential = new TokenCredential(accessToken);
-            var storageCredentials = new StorageCredentials(tokenCredential);
-            var uri = new Uri($"https://{_settings.StorageAccountName}.blob.core.windows.net/{_settings.StorageContainerName}/{_settings.StorageBlobName}");
-            var blob = new CloudBlockBlob(uri, storageCredentials);
-            // We download the whole file here because we are going to show it on the Razor view
-            // Usually when reading files from Storage you should use the Stream APIs, e.g. blob.OpenReadAsync()
-            string content = await blob.DownloadTextAsync();
-
-            return new StorageViewModel
+            using (var reader = new StreamReader(response.Value.Content))
             {
-                FileContent = content
-            };
+                // We download the whole file here because we are going to show it on the Razor view
+                // Usually when reading files from Storage you should return the file via the Stream
+                var content = await reader.ReadToEndAsync();
+                return new StorageViewModel
+                {
+                    FileContent = content
+                };
+            }
         }
 
         public async Task<SqlDatabaseViewModel> AccessSqlDatabase()
@@ -129,7 +134,7 @@ namespace Joonasw.ManagedIdentityDemos.Services
             // This will not work in local environment
             // Local gets token as a user
             // But we need to use app permissions, i.e. acquire token as application only
-            string accessToken = await GetAccessToken(_settings.CustomApiApplicationIdUri);
+            string accessToken = await GetAccessToken(_settings.CustomApiApplicationIdUri, _settings.CustomApiTokenProviderConnectionString);
             var req = new HttpRequestMessage(HttpMethod.Get, $"{_settings.CustomApiBaseUrl}/api/test");
             req.Headers.Authorization =
                 new AuthenticationHeaderValue("Bearer", accessToken);
@@ -185,16 +190,16 @@ namespace Joonasw.ManagedIdentityDemos.Services
             {
                 content = await reader.ReadToEndAsync();
             }
-            
+
             return new DataLakeViewModel
             {
                 FileContent = content
             };
         }
 
-        private async Task<string> GetAccessToken(string resource)
+        private async Task<string> GetAccessToken(string resource, string tokenProviderConnectionString = null)
         {
-            var authProvider = new AzureServiceTokenProvider();
+            var authProvider = new AzureServiceTokenProvider(tokenProviderConnectionString);
             string tenantId = _settings.ManagedIdentityTenantId;
 
             if (tenantId != null && tenantId.Length == 0)
