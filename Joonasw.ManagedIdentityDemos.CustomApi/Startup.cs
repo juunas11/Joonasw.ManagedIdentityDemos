@@ -2,9 +2,9 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Joonasw.ManagedIdentityDemos.CustomApi
@@ -16,23 +16,11 @@ namespace Joonasw.ManagedIdentityDemos.CustomApi
             Configuration = configuration;
         }
 
-        public IConfiguration Configuration { get; }
+        private IConfiguration Configuration { get; }
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc(o =>
-            {
-                o.Filters.Add(new AuthorizeFilter("default"));
-            }).SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
-
-            services.AddAuthorization(o =>
-            {
-                o.AddPolicy("default", policy =>
-                {
-                    policy.RequireAuthenticatedUser();
-                });
-            });
-
+            services.AddControllers().SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(o =>
                 {
@@ -50,16 +38,20 @@ namespace Joonasw.ManagedIdentityDemos.CustomApi
                 });
         }
 
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseRouting();
             app.UseAuthentication();
-
-            app.UseMvc();
+            app.UseAuthorization();
+            app.UseEndpoints(o =>
+            {
+                o.MapControllers().RequireAuthorization();
+            });
         }
     }
 }
