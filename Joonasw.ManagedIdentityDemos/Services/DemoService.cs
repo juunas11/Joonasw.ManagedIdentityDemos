@@ -162,12 +162,12 @@ namespace Joonasw.ManagedIdentityDemos.Services
             string hubNamespace = _settings.EventHubNamespace;
             var endpoint = new Uri($"sb://{hubNamespace}.servicebus.windows.net/");
             string hubName = _settings.EventHubName;
-            var client = EventHubClient.Create(
+            var client = EventHubClient.CreateWithTokenProvider(
                 endpoint,
                 hubName,
                 new ManagedIdentityEventHubsTokenProvider(_settings.ManagedIdentityTenantId));
-            // You can also do this:
-            // var client = EventHubClient.CreateWithManagedServiceIdentity(endpoint, hubName);
+            // You can also do this (but then you can't specify the tenant used):
+            // var client = EventHubClient.CreateWithManagedIdentity(endpoint, hubName);
             byte[] bytes = Encoding.UTF8.GetBytes($"Test message {Guid.NewGuid()} ({DateTime.UtcNow:HH:mm:ss})");
             await client.SendAsync(new EventData(bytes));
         }
