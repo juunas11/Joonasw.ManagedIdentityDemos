@@ -9,6 +9,6 @@ namespace Joonasw.ManagedIdentityDemos.Data
         {
         }
 
-        public DbQuery<TestModel> Tests { get; set; }
+        public DbSet<TestModel> Tests { get; set; }
     }
 }

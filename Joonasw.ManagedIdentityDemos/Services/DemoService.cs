@@ -53,7 +53,7 @@ namespace Joonasw.ManagedIdentityDemos.Services
             {
                 // We download the whole file here because we are going to show it on the Razor view
                 // Usually when reading files from Storage you should return the file via the Stream
-                var content = await reader.ReadToEndAsync();
+                string content = await reader.ReadToEndAsync();
                 return new StorageViewModel
                 {
                     FileContent = content

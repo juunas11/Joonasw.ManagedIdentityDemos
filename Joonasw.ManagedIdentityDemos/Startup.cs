@@ -33,7 +33,7 @@ namespace Joonasw.ManagedIdentityDemos
 
             services.Configure<DemoSettings>(Configuration.GetSection("Demo"));
 
-            var demoSettings = Configuration.GetSection("Demo").Get<DemoSettings>();
+            DemoSettings demoSettings = Configuration.GetSection("Demo").Get<DemoSettings>();
             var managedIdentityInterceptor = new ManagedIdentityConnectionInterceptor(demoSettings);
             services.AddDbContext<MsiDbContext>(o =>
                 o.UseSqlServer(demoSettings.SqlConnectionString).AddInterceptors(managedIdentityInterceptor));
