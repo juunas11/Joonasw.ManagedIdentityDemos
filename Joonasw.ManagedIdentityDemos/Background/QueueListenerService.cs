@@ -1,12 +1,12 @@
-﻿using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using Joonasw.ManagedIdentityDemos.Options;
+﻿using Joonasw.ManagedIdentityDemos.Options;
 using Joonasw.ManagedIdentityDemos.Services;
 using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Azure.ServiceBus;
 using Microsoft.Extensions.Options;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Joonasw.ManagedIdentityDemos.Background
 {
