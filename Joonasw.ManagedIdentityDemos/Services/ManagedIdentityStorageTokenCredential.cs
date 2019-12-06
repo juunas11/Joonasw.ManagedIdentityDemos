@@ -15,12 +15,12 @@ namespace Joonasw.ManagedIdentityDemos.Services
             _managedIdentityTenantId = managedIdentityTenantId;
         }
 
-        public override AccessToken GetToken(string[] scopes, CancellationToken cancellationToken)
+        public override AccessToken GetToken(TokenRequestContext requestContext, CancellationToken cancellationToken)
         {
-            return GetTokenAsync(scopes, cancellationToken).GetAwaiter().GetResult();
+            return GetTokenAsync(requestContext, cancellationToken).GetAwaiter().GetResult();
         }
 
-        public override async Task<AccessToken> GetTokenAsync(string[] scopes, CancellationToken cancellationToken)
+        public override async ValueTask<AccessToken> GetTokenAsync(TokenRequestContext requestContext, CancellationToken cancellationToken)
         {
             var authProvider = new AzureServiceTokenProvider();
             string tenantId = _managedIdentityTenantId;
