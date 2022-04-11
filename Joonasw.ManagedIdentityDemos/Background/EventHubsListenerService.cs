@@ -1,61 +1,77 @@
-﻿using Joonasw.ManagedIdentityDemos.Options;
+﻿using Azure.Core;
+using Azure.Messaging.EventHubs;
+using Azure.Messaging.EventHubs.Processor;
+using Azure.Storage.Blobs;
+using Joonasw.ManagedIdentityDemos.Options;
 using Joonasw.ManagedIdentityDemos.Services;
 using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Azure.EventHubs.Processor;
-using Microsoft.Azure.Storage;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Joonasw.ManagedIdentityDemos.Background
 {
-    public class EventHubsListenerService : HostedService, IEventProcessorFactory
+    public class EventHubsListenerService : BackgroundService
     {
         private readonly TelemetryClient _telemetryClient;
         private readonly IHubContext<EventHubMessageHub, IClientReceiver> _messageHub;
-        private readonly DemoSettings _demoSettings;
+        private readonly EventProcessorClient _eventProcessorClient;
 
         public EventHubsListenerService(
             TelemetryClient telemetryClient,
             IHubContext<EventHubMessageHub, IClientReceiver> messageHub,
+            BlobServiceClient blobServiceClient,
+            TokenCredential tokenCredential,
             IOptions<DemoSettings> demoSettings)
         {
             _telemetryClient = telemetryClient;
             _messageHub = messageHub;
-            _demoSettings = demoSettings.Value;
-        }
-
-        public IEventProcessor CreateEventProcessor(PartitionContext context)
-        {
-            return new EventHubProcessor(_telemetryClient, _messageHub);
+            _eventProcessorClient = new EventProcessorClient(
+                blobServiceClient.GetBlobContainerClient(demoSettings.Value.EventHubStorageContainerName),
+                "$Default",
+                $"{demoSettings.Value.EventHubNamespace}.servicebus.windows.net",
+                demoSettings.Value.EventHubName,
+                tokenCredential);
         }
 
         protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            string hubNamespace = _demoSettings.EventHubNamespace;
-            var endpoint = new Uri($"sb://{hubNamespace}.servicebus.windows.net/");
-            string hubName = _demoSettings.EventHubName;
-            var storageAccount = CloudStorageAccount.Parse(_demoSettings.EventHubStorageConnectionString);
+            _eventProcessorClient.ProcessEventAsync += ProcessEventAsync;
+            _eventProcessorClient.ProcessErrorAsync += ProcessErrorAsync;
 
-            var host = new EventProcessorHost(
-                endpoint,
-                hubName,
-                "$Default",
-                new ManagedIdentityEventHubsTokenProvider(_demoSettings.ManagedIdentityTenantId),
-                storageAccount,
-                _demoSettings.EventHubStorageContainerName);
+            await _eventProcessorClient.StartProcessingAsync(cancellationToken);
+
             try
             {
-                await host.RegisterEventProcessorFactoryAsync(this);
+                await Task.Delay(Timeout.Infinite, cancellationToken);
+            }
+            catch (TaskCanceledException)
+            {
+            }
 
-                await Task.Delay(-1, cancellationToken);
+            try
+            {
+                await _eventProcessorClient.StopProcessingAsync();
             }
             finally
             {
-                await host.UnregisterEventProcessorAsync();
+                _eventProcessorClient.ProcessEventAsync -= ProcessEventAsync;
+                _eventProcessorClient.ProcessErrorAsync -= ProcessErrorAsync;
             }
+        }
+
+        public async Task ProcessEventAsync(ProcessEventArgs args)
+        {
+            string message = args.Data.EventBody.ToString();
+            await _messageHub.Clients.All.ReceiveMessage(message);
+        }
+
+        private Task ProcessErrorAsync(ProcessErrorEventArgs args)
+        {
+            _telemetryClient.TrackException(args.Exception);
+            return Task.CompletedTask;
         }
     }
 }

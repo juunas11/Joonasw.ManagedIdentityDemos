@@ -16,7 +16,9 @@ namespace Joonasw.ManagedIdentityDemos.Options
 
         public string CustomApiBaseUrl { get; set; }
         public string CustomApiApplicationIdUri { get; set; }
-        public string CustomApiTokenProviderConnectionString { get; set; }
+        public string CustomApiTenantId { get; set; }
+        public string CustomApiClientId { get; set; }
+        public string CustomApiClientSecret { get; set; }
 
         public string ServiceBusNamespace { get; set; }
         public string ServiceBusQueueName { get; set; }

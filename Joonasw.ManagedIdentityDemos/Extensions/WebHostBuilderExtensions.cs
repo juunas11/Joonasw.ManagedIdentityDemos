@@ -1,8 +1,7 @@
-﻿using Microsoft.AspNetCore.Hosting;
-using Microsoft.Azure.KeyVault;
-using Microsoft.Azure.Services.AppAuthentication;
+﻿using Azure.Identity;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Configuration.AzureKeyVault;
+using System;
 
 namespace Joonasw.ManagedIdentityDemos.Extensions
 {
@@ -14,13 +13,21 @@ namespace Joonasw.ManagedIdentityDemos.Extensions
             {
                 IConfigurationRoot config = builder.Build();
                 string keyVaultUrl = config["Demo:KeyVaultBaseUrl"];
+                string tenantId = config["Demo:ManagedIdentityTenantId"];
+                if (string.IsNullOrEmpty(tenantId))
+                {
+                    tenantId = null;
+                }
 
                 if (!string.IsNullOrEmpty(keyVaultUrl))
                 {
-                    var azureServiceTokenProvider = new AzureServiceTokenProvider();
-                    var kvClient = new KeyVaultClient(
-                        (authority, resource, scope) => azureServiceTokenProvider.KeyVaultTokenCallback(authority, resource, scope));
-                    builder.AddAzureKeyVault(keyVaultUrl, kvClient, new DefaultKeyVaultSecretManager());
+                    var credential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
+                    {
+                        SharedTokenCacheTenantId = tenantId,
+                        VisualStudioCodeTenantId = tenantId,
+                        VisualStudioTenantId = tenantId,
+                    });
+                    builder.AddAzureKeyVault(new Uri(keyVaultUrl), credential);
                 }
             });
         }

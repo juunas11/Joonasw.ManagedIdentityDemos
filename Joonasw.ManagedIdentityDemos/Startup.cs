@@ -1,15 +1,20 @@
-﻿using Joonasw.ManagedIdentityDemos.Background;
+﻿using Azure.Core;
+using Azure.Identity;
+using Azure.Messaging.EventHubs.Consumer;
+using Joonasw.ManagedIdentityDemos.Background;
 using Joonasw.ManagedIdentityDemos.Contracts;
 using Joonasw.ManagedIdentityDemos.Data;
 using Joonasw.ManagedIdentityDemos.Options;
 using Joonasw.ManagedIdentityDemos.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
+using System;
 
 namespace Joonasw.ManagedIdentityDemos
 {
@@ -24,7 +29,7 @@ namespace Joonasw.ManagedIdentityDemos
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllersWithViews().SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
+            services.AddControllersWithViews();
             services.AddSignalR();
 
             services.AddTransient<IDemoService, DemoService>();
@@ -41,9 +46,38 @@ namespace Joonasw.ManagedIdentityDemos
             services.AddApplicationInsightsTelemetry(o =>
             {
                 o.EnableQuickPulseMetricStream = true;
-                o.InstrumentationKey = Configuration["ApplicationInsights:InstrumentationKey"];
+                o.ConnectionString = Configuration["ApplicationInsights:ConnectionString"];
             });
-            services.AddHttpClient(HttpClients.CustomApi);
+            //services.AddHttpClient(HttpClients.CustomApi);
+
+            var credential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
+            {
+                SharedTokenCacheTenantId = demoSettings.ManagedIdentityTenantId,
+                VisualStudioCodeTenantId = demoSettings.ManagedIdentityTenantId,
+                VisualStudioTenantId = demoSettings.ManagedIdentityTenantId,
+            });
+            services.AddSingleton<TokenCredential>(credential);
+            TokenCredential customApiCredential = string.IsNullOrEmpty(demoSettings.CustomApiClientSecret)
+                ? credential
+                : new ClientSecretCredential(
+                    demoSettings.CustomApiTenantId,
+                    demoSettings.CustomApiClientId,
+                    demoSettings.CustomApiClientSecret);
+            services.AddHttpClient<CustomApiClient, CustomApiClient>(
+                (httpClient, serviceProvider) =>
+                {
+                    var settings = serviceProvider.GetRequiredService<IOptionsSnapshot<DemoSettings>>();
+                    return new CustomApiClient(httpClient, settings, customApiCredential);
+                });
+
+            services.AddAzureClients(clients =>
+            {
+                clients.AddBlobServiceClient(new Uri($"https://{demoSettings.StorageAccountName}.blob.core.windows.net"));
+                clients.AddDataLakeServiceClient(new Uri($"https://{demoSettings.DataLakeStoreName}.azuredatalakestore.net"));
+                clients.AddEventHubProducerClientWithNamespace($"{demoSettings.EventHubNamespace}.servicebus.windows.net", demoSettings.EventHubName);
+                clients.AddServiceBusClientWithNamespace($"{demoSettings.ServiceBusNamespace}.servicebus.windows.net");
+                clients.UseCredential(credential);
+            });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
