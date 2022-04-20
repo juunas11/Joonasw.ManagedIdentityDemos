@@ -3,6 +3,7 @@ using Azure.Core;
 using Azure.Messaging.EventHubs;
 using Azure.Messaging.EventHubs.Producer;
 using Azure.Messaging.ServiceBus;
+using Azure.Security.KeyVault.Secrets;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Files.DataLake;
@@ -25,6 +26,7 @@ namespace Joonasw.ManagedIdentityDemos.Services
     {
         private static AccessToken CachedAdoNetToken;
         private readonly DemoSettings _settings;
+        private readonly SecretClient _secretClient;
         private readonly MsiDbContext _dbContext;
         private readonly BlobServiceClient _blobServiceClient;
         private readonly DataLakeServiceClient _dataLakeServiceClient;
@@ -35,6 +37,7 @@ namespace Joonasw.ManagedIdentityDemos.Services
 
         public DemoService(
             IOptionsSnapshot<DemoSettings> settings,
+            SecretClient secretClient,
             MsiDbContext dbContext,
             BlobServiceClient blobServiceClient,
             DataLakeServiceClient dataLakeServiceClient,
@@ -44,6 +47,7 @@ namespace Joonasw.ManagedIdentityDemos.Services
             CustomApiClient customApiClient)
         {
             _settings = settings.Value;
+            _secretClient = secretClient;
             _dbContext = dbContext;
             _blobServiceClient = blobServiceClient;
             _dataLakeServiceClient = dataLakeServiceClient;
@@ -51,6 +55,17 @@ namespace Joonasw.ManagedIdentityDemos.Services
             _serviceBusClient = serviceBusClient;
             _tokenCredential = tokenCredential;
             _customApiClient = customApiClient;
+        }
+
+        public async Task<KeyVaultConfigViewModel> AccessKeyVault()
+        {
+            var secret = await _secretClient.GetSecretAsync("Demo--KeyVaultSecret");
+
+            return new KeyVaultConfigViewModel
+            {
+                SecretValueFromConfig = _settings.KeyVaultSecret,
+                SecretValueFromVault = secret.Value.Value,
+            };
         }
 
         public async Task<StorageViewModel> AccessStorage()
@@ -62,7 +77,7 @@ namespace Joonasw.ManagedIdentityDemos.Services
             using (var reader = new StreamReader(response.Value.Content))
             {
                 // We download the whole file here because we are going to show it on the Razor view
-                // Usually when reading files from Storage you should return the file via the Stream
+                // Usually when reading files from Storage you should return the file via a Stream
                 string content = await reader.ReadToEndAsync();
                 return new StorageViewModel
                 {
@@ -171,12 +186,21 @@ namespace Joonasw.ManagedIdentityDemos.Services
 
         public async Task<DataLakeViewModel> AccessDataLake()
         {
-            // TODO
-
-            return new DataLakeViewModel
+            var x = _dataLakeServiceClient.GetFileSystemClient("test");
+            var y = x.GetDirectoryClient("test");
+            var z = y.GetFileClient("test.txt");
+            var stream = await z.OpenReadAsync();
+            using (var reader = new StreamReader(stream))
             {
-                FileContent = ""
-            };
+                // We download the whole file here because we are going to show it on the Razor view
+                // Usually when reading files from Storage you should return the file via a Stream
+                string content = await reader.ReadToEndAsync();
+                return new DataLakeViewModel
+                {
+                    FileContent = content
+                };
+            }
+
         }
     }
 }

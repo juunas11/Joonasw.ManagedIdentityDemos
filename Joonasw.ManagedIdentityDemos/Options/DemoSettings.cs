@@ -12,6 +12,7 @@ namespace Joonasw.ManagedIdentityDemos.Options
 
         public string SqlConnectionString { get; set; }
 
+        public string KeyVaultBaseUrl { get; set; }
         public string KeyVaultSecret { get; set; }
 
         public string CustomApiBaseUrl { get; set; }

@@ -2,6 +2,7 @@
 {
     public class KeyVaultConfigViewModel
     {
-        public string SecretValue { get; set; }
+        public string SecretValueFromConfig { get; set; }
+        public string SecretValueFromVault { get; set; }
     }
 }

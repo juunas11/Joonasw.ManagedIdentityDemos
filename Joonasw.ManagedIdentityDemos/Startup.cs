@@ -48,7 +48,6 @@ namespace Joonasw.ManagedIdentityDemos
                 o.EnableQuickPulseMetricStream = true;
                 o.ConnectionString = Configuration["ApplicationInsights:ConnectionString"];
             });
-            //services.AddHttpClient(HttpClients.CustomApi);
 
             var credential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
             {
@@ -73,9 +72,10 @@ namespace Joonasw.ManagedIdentityDemos
             services.AddAzureClients(clients =>
             {
                 clients.AddBlobServiceClient(new Uri($"https://{demoSettings.StorageAccountName}.blob.core.windows.net"));
-                clients.AddDataLakeServiceClient(new Uri($"https://{demoSettings.DataLakeStoreName}.azuredatalakestore.net"));
+                clients.AddDataLakeServiceClient(new Uri($"https://{demoSettings.DataLakeStoreName}.blob.core.windows.net"));
                 clients.AddEventHubProducerClientWithNamespace($"{demoSettings.EventHubNamespace}.servicebus.windows.net", demoSettings.EventHubName);
                 clients.AddServiceBusClientWithNamespace($"{demoSettings.ServiceBusNamespace}.servicebus.windows.net");
+                clients.AddSecretClient(new Uri(demoSettings.KeyVaultBaseUrl));
                 clients.UseCredential(credential);
             });
         }
