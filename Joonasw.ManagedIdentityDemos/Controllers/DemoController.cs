@@ -5,6 +5,7 @@ using Joonasw.ManagedIdentityDemos.Models;
 using Joonasw.ManagedIdentityDemos.Contracts;
 using Joonasw.ManagedIdentityDemos.Options;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Configuration;
 
 namespace Joonasw.ManagedIdentityDemos.Controllers
 {
@@ -14,7 +15,10 @@ namespace Joonasw.ManagedIdentityDemos.Controllers
         private readonly IDemoService _demoService;
         private readonly DemoSettings _settings;
 
-        public DemoController(IDemoService demoService, IOptionsSnapshot<DemoSettings> demoSettings)
+        public DemoController(
+            IDemoService demoService,
+            IOptionsSnapshot<DemoSettings> demoSettings,
+            IConfiguration configuration)
         {
             _demoService = demoService;
             _settings = demoSettings.Value;
@@ -24,12 +28,9 @@ namespace Joonasw.ManagedIdentityDemos.Controllers
         public IActionResult Index() => View();
 
         [HttpGet, HttpHead]
-        public IActionResult KeyVaultConfig()
+        public async Task<IActionResult> KeyVaultConfig()
         {
-            var model = new KeyVaultConfigViewModel
-            {
-                SecretValue = _settings.KeyVaultSecret
-            };
+            var model = await _demoService.AccessKeyVault();
             return View(model);
         }
 
@@ -82,6 +83,13 @@ namespace Joonasw.ManagedIdentityDemos.Controllers
         }
 
         [HttpGet, HttpHead]
+        public async Task<IActionResult> CosmosDb()
+        {
+            CosmosDbViewModel model = await _demoService.AccessCosmosDb();
+            return View(model);
+        }
+
+        [HttpGet, HttpHead]
         public async Task<IActionResult> CustomService()
         {
             CustomServiceViewModel model = await _demoService.AccessCustomApi();
@@ -99,6 +107,17 @@ namespace Joonasw.ManagedIdentityDemos.Controllers
         {
             DataLakeViewModel model = await _demoService.AccessDataLake();
             return View(model);
+        }
+
+        [HttpGet, HttpHead]
+        public IActionResult CognitiveServices() => View(new CognitiveServicesInputModel());
+
+        [HttpPost]
+        public async Task<IActionResult> CognitiveServices([FromForm] CognitiveServicesInputModel model)
+        {
+            CognitiveServicesResultsViewModel resultsModel =
+                await _demoService.AccessCognitiveServices(model.Input);
+            return View("CognitiveServicesResults", resultsModel);
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

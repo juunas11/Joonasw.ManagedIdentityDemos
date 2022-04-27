@@ -1,4 +1,5 @@
 ﻿using Azure;
+using Azure.AI.TextAnalytics;
 using Azure.Core;
 using Azure.Messaging.EventHubs;
 using Azure.Messaging.EventHubs.Producer;
@@ -11,6 +12,7 @@ using Joonasw.ManagedIdentityDemos.Contracts;
 using Joonasw.ManagedIdentityDemos.Data;
 using Joonasw.ManagedIdentityDemos.Models;
 using Joonasw.ManagedIdentityDemos.Options;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -34,6 +36,8 @@ namespace Joonasw.ManagedIdentityDemos.Services
         private readonly ServiceBusClient _serviceBusClient;
         private readonly TokenCredential _tokenCredential;
         private readonly CustomApiClient _customApiClient;
+        private readonly CosmosClient _cosmosClient;
+        private readonly TextAnalyticsClient _textAnalyticsClient;
 
         public DemoService(
             IOptionsSnapshot<DemoSettings> settings,
@@ -44,7 +48,9 @@ namespace Joonasw.ManagedIdentityDemos.Services
             EventHubProducerClient eventHubProducerClient,
             ServiceBusClient serviceBusClient,
             TokenCredential tokenCredential,
-            CustomApiClient customApiClient)
+            CustomApiClient customApiClient,
+            CosmosClient cosmosClient,
+            TextAnalyticsClient textAnalyticsClient)
         {
             _settings = settings.Value;
             _secretClient = secretClient;
@@ -55,6 +61,8 @@ namespace Joonasw.ManagedIdentityDemos.Services
             _serviceBusClient = serviceBusClient;
             _tokenCredential = tokenCredential;
             _customApiClient = customApiClient;
+            _cosmosClient = cosmosClient;
+            _textAnalyticsClient = textAnalyticsClient;
         }
 
         public async Task<KeyVaultConfigViewModel> AccessKeyVault()
@@ -72,7 +80,7 @@ namespace Joonasw.ManagedIdentityDemos.Services
         {
             BlobContainerClient containerClient = _blobServiceClient.GetBlobContainerClient(_settings.StorageContainerName);
             BlobClient blobClient = containerClient.GetBlobClient(_settings.StorageBlobName);
-            Response<BlobDownloadInfo> response = await blobClient.DownloadAsync();
+            Azure.Response<BlobDownloadInfo> response = await blobClient.DownloadAsync();
 
             using (var reader = new StreamReader(response.Value.Content))
             {
@@ -160,6 +168,29 @@ namespace Joonasw.ManagedIdentityDemos.Services
             return results;
         }
 
+        public async Task<CosmosDbViewModel> AccessCosmosDb()
+        {
+            Container container = _cosmosClient.GetContainer(_settings.CosmosDbDatabaseId, _settings.CosmosDbContainerId);
+            FeedIterator<CosmosItemModel> iterator =
+                container.GetItemQueryIterator<CosmosItemModel>("SELECT * FROM c");
+            var result = new CosmosDbViewModel
+            {
+                Documents = new List<CosmosDocumentModel>()
+            };
+
+            while (iterator.HasMoreResults)
+            {
+                FeedResponse<CosmosItemModel> response = await iterator.ReadNextAsync();
+                result.Documents.AddRange(response.Select(x => new CosmosDocumentModel
+                {
+                    Id = x.Id,
+                    Value = x.Value
+                }));
+            }
+
+            return result;
+        }
+
         public async Task<CustomServiceViewModel> AccessCustomApi()
         {
             var response = await _customApiClient.Request();
@@ -200,7 +231,24 @@ namespace Joonasw.ManagedIdentityDemos.Services
                     FileContent = content
                 };
             }
+        }
 
+        public async Task<CognitiveServicesResultsViewModel> AccessCognitiveServices(string input)
+        {
+            Azure.Response<DocumentSentiment> response =
+                await _textAnalyticsClient.AnalyzeSentimentAsync(input);
+            DocumentSentiment sentiment = response.Value;
+
+            return new CognitiveServicesResultsViewModel
+            {
+                Sentiment = sentiment.Sentiment.ToString(),
+                ConfidenceScores = new Dictionary<string, double>
+                {
+                    [TextSentiment.Positive.ToString()] = sentiment.ConfidenceScores.Positive,
+                    [TextSentiment.Negative.ToString()] = sentiment.ConfidenceScores.Negative,
+                    [TextSentiment.Neutral.ToString()] = sentiment.ConfidenceScores.Neutral,
+                }
+            };
         }
     }
 }

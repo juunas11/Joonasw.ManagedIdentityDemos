@@ -1,0 +1,21 @@
+﻿@model CognitiveServicesResultsViewModel
+@{
+    ViewData["Title"] = "Cognitive Services";
+}
+
+<h2>Cognitive Services results</h2>
+
+<p>
+    <strong>Sentiment:</strong>&nbsp;@Model.Sentiment
+</p>
+
+<p>Confidence scores:</p>
+
+<ul class="mb-3">
+    @foreach (var pair in Model.ConfidenceScores)
+    {
+        <li>@pair.Key: @pair.Value</li>
+    }
+</ul>
+
+<a asp-controller="Demo" asp-action="CognitiveServices" class="btn btn-secondary">Try again</a>

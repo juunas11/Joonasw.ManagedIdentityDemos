@@ -31,5 +31,11 @@ namespace Joonasw.ManagedIdentityDemos.Options
 
         public string DataLakeStoreName { get; set; }
         public string DataLakeFileName { get; set; }
+
+        public string CosmosDbAccountUri { get; set; }
+        public string CosmosDbDatabaseId { get; set; }
+        public string CosmosDbContainerId { get; set; }
+
+        public string CognitiveServicesBaseUrl { get; set; }
     }
 }

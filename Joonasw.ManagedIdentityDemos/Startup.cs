@@ -1,6 +1,5 @@
 ﻿using Azure.Core;
 using Azure.Identity;
-using Azure.Messaging.EventHubs.Consumer;
 using Joonasw.ManagedIdentityDemos.Background;
 using Joonasw.ManagedIdentityDemos.Contracts;
 using Joonasw.ManagedIdentityDemos.Data;
@@ -8,6 +7,7 @@ using Joonasw.ManagedIdentityDemos.Options;
 using Joonasw.ManagedIdentityDemos.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Azure.Cosmos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
@@ -69,6 +69,11 @@ namespace Joonasw.ManagedIdentityDemos
                     return new CustomApiClient(httpClient, settings, customApiCredential);
                 });
 
+            services.AddSingleton((IServiceProvider _) =>
+            {
+                return new CosmosClient(Configuration["Demo:CosmosDbAccountUri"], credential);
+            });
+
             services.AddAzureClients(clients =>
             {
                 clients.AddBlobServiceClient(new Uri($"https://{demoSettings.StorageAccountName}.blob.core.windows.net"));
@@ -76,6 +81,7 @@ namespace Joonasw.ManagedIdentityDemos
                 clients.AddEventHubProducerClientWithNamespace($"{demoSettings.EventHubNamespace}.servicebus.windows.net", demoSettings.EventHubName);
                 clients.AddServiceBusClientWithNamespace($"{demoSettings.ServiceBusNamespace}.servicebus.windows.net");
                 clients.AddSecretClient(new Uri(demoSettings.KeyVaultBaseUrl));
+                clients.AddTextAnalyticsClient(new Uri(demoSettings.CognitiveServicesBaseUrl));
                 clients.UseCredential(credential);
             });
         }
