@@ -1,19 +1,25 @@
 # Azure Managed Identity demo collection
 
-This is an ASP.NET Core 3.1 app which demonstrates usage
+This is an ASP.NET Core 6.0 app which demonstrates usage
 of some Azure services with Managed Identity authentication:
 
-* Key Vault for configuration data
-* Blob Storage
-* SQL Database
-* Service Bus Queue
+- Key Vault
+- App Configuration
+- Cosmos DB
+- SQL Database
+- Data Lake Gen 2
+- Blob Storage
+- Event Hub
+- Service Bus Queue
+- Azure Maps
+- Cognitive Services
 
 There is also a demo of calling a custom API, which is in the Joonasw.ManagedIdentityDemos.CustomApi folder.
 
 ## Setup instructions
 
-For local development you will need the [3.1 .NET Core SDK](https://www.microsoft.com/net/download/dotnet-core/3.1).
-If you use Visual Studio, currently you'd need at least VS 2019.
+For local development you will need the [6.0 .NET SDK](https://dotnet.microsoft.com/en-us/download/dotnet/6.0).
+If you use Visual Studio, currently you'd need at least VS 2022.
 
 For local development, you can give your user account access to the resources.
 You will need to login to the az CLI and ensure you are logged in to the right Azure AD tenant.
@@ -315,33 +321,3 @@ The sender tab sends messages to the queue.
 
 Sending messages is done in the `SendEventHubsMessage` function of [DemoService](https://github.com/juunas11/Joonasw.ManagedIdentityDemos/blob/master/Joonasw.ManagedIdentityDemos/Services/DemoService.cs).
 Receiving messages happens in the background service [EventHubsListenerService](https://github.com/juunas11/Joonasw.ManagedIdentityDemos/blob/master/Joonasw.ManagedIdentityDemos/Background/EventHubsListenerService.cs).
-
-## Azure Data Lake Storage
-
-You will need an Azure Data Lake Storage (gen 1) first.
-The settings that affect this demo are:
-
-```json
-{
-  "Demo": {
-    "DataLakeStoreName": "name-of-your-data-lake-store",
-    "DataLakeFileName": "name-of-file-at-root-of-store"
-  }
-}
-```
-
-For the first one specify the name of the Data Lake Storage you created.
-It will be used to construct the full domain name in `DemoService`.
-Upload a text file to the root of the store and specify its name in the second setting.
-
-Data Lake permissions can be set up in multiple ways,
-check the docs for more info: [https://docs.microsoft.com/en-us/azure/data-lake-store/data-lake-store-access-control](https://docs.microsoft.com/en-us/azure/data-lake-store/data-lake-store-access-control).
-
-What worked for me was giving Read access to your user account and/or the generated service principal on the file,
-and also Execute access on the root.
-You can do this through the *Access* buttons.
-
-The Data Lake demo should then work.
-It will show the file contents in the view.
-
-The code accessing Data Lake can be found in the `AccessDataLake` function of [DemoService](https://github.com/juunas11/Joonasw.ManagedIdentityDemos/blob/master/Joonasw.ManagedIdentityDemos/Services/DemoService.cs).
