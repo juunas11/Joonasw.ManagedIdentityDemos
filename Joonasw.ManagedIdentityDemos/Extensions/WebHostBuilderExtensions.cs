@@ -1,26 +1,47 @@
-﻿using Microsoft.AspNetCore.Hosting;
-using Microsoft.Azure.KeyVault;
-using Microsoft.Azure.Services.AppAuthentication;
+﻿using Azure.Identity;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Configuration.AzureKeyVault;
+using System;
 
 namespace Joonasw.ManagedIdentityDemos.Extensions
 {
     public static class WebHostBuilderExtensions
     {
-        public static IWebHostBuilder UseAzureKeyVaultConfiguration(this IWebHostBuilder webHostBuilder)
+        public static IWebHostBuilder UseAzureKeyVaultAndAppConfiguration(this IWebHostBuilder webHostBuilder)
         {
             return webHostBuilder.ConfigureAppConfiguration(builder =>
             {
                 IConfigurationRoot config = builder.Build();
                 string keyVaultUrl = config["Demo:KeyVaultBaseUrl"];
+                string appConfigUrl = config["Demo:AppConfigUrl"];
+                string tenantId = config["Demo:ManagedIdentityTenantId"];
+                if (string.IsNullOrEmpty(tenantId))
+                {
+                    tenantId = null;
+                }
+
+                var credential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
+                {
+                    SharedTokenCacheTenantId = tenantId,
+                    VisualStudioCodeTenantId = tenantId,
+                    VisualStudioTenantId = tenantId,
+                });
+
+                if (!string.IsNullOrEmpty(appConfigUrl))
+                {
+                    //var uri = new Uri(appConfigUrl);
+                    //var scope = uri.GetComponents(UriComponents.SchemeAndServer, UriFormat.SafeUnescaped) + "/.default";
+                    //var token = credential.GetToken(new Azure.Core.TokenRequestContext(new[] { scope }, null));
+
+                    builder.AddAzureAppConfiguration(options =>
+                    {
+                        options.Connect(new Uri(appConfigUrl), credential);
+                    });
+                }
 
                 if (!string.IsNullOrEmpty(keyVaultUrl))
                 {
-                    var azureServiceTokenProvider = new AzureServiceTokenProvider();
-                    var kvClient = new KeyVaultClient(
-                        (authority, resource, scope) => azureServiceTokenProvider.KeyVaultTokenCallback(authority, resource, scope));
-                    builder.AddAzureKeyVault(keyVaultUrl, kvClient, new DefaultKeyVaultSecretManager());
+                    builder.AddAzureKeyVault(new Uri(keyVaultUrl), credential);
                 }
             });
         }

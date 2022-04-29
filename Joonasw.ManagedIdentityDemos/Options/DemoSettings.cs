@@ -12,11 +12,17 @@ namespace Joonasw.ManagedIdentityDemos.Options
 
         public string SqlConnectionString { get; set; }
 
+        public string KeyVaultBaseUrl { get; set; }
         public string KeyVaultSecret { get; set; }
+
+        public string AppConfigUrl { get; set; }
+        public string AppConfigValue { get; set; }
 
         public string CustomApiBaseUrl { get; set; }
         public string CustomApiApplicationIdUri { get; set; }
-        public string CustomApiTokenProviderConnectionString { get; set; }
+        public string CustomApiTenantId { get; set; }
+        public string CustomApiClientId { get; set; }
+        public string CustomApiClientSecret { get; set; }
 
         public string ServiceBusNamespace { get; set; }
         public string ServiceBusQueueName { get; set; }
@@ -28,5 +34,13 @@ namespace Joonasw.ManagedIdentityDemos.Options
 
         public string DataLakeStoreName { get; set; }
         public string DataLakeFileName { get; set; }
+
+        public string CosmosDbAccountUri { get; set; }
+        public string CosmosDbDatabaseId { get; set; }
+        public string CosmosDbContainerId { get; set; }
+
+        public string CognitiveServicesBaseUrl { get; set; }
+
+        public string MapsClientId { get; set; }
     }
 }

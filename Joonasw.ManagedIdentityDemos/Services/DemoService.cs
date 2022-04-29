@@ -1,58 +1,99 @@
 ﻿using Azure;
+using Azure.AI.TextAnalytics;
+using Azure.Core;
+using Azure.Data.AppConfiguration;
+using Azure.Messaging.EventHubs;
+using Azure.Messaging.EventHubs.Producer;
+using Azure.Messaging.ServiceBus;
+using Azure.Security.KeyVault.Secrets;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Azure.Storage.Files.DataLake;
 using Joonasw.ManagedIdentityDemos.Contracts;
 using Joonasw.ManagedIdentityDemos.Data;
 using Joonasw.ManagedIdentityDemos.Models;
+using Joonasw.ManagedIdentityDemos.Models.AzureMaps;
 using Joonasw.ManagedIdentityDemos.Options;
-using Microsoft.Azure.DataLake.Store;
-using Microsoft.Azure.EventHubs;
-using Microsoft.Azure.ServiceBus;
-using Microsoft.Azure.Services.AppAuthentication;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Joonasw.ManagedIdentityDemos.Services
 {
     public class DemoService : IDemoService
     {
+        private static AccessToken CachedAdoNetToken;
         private readonly DemoSettings _settings;
+        private readonly SecretClient _secretClient;
         private readonly MsiDbContext _dbContext;
-        private readonly HttpClient _httpClient;
+        private readonly BlobServiceClient _blobServiceClient;
+        private readonly DataLakeServiceClient _dataLakeServiceClient;
+        private readonly EventHubProducerClient _eventHubProducerClient;
+        private readonly ServiceBusClient _serviceBusClient;
+        private readonly TokenCredential _tokenCredential;
+        private readonly CustomApiClient _customApiClient;
+        private readonly CosmosClient _cosmosClient;
+        private readonly TextAnalyticsClient _textAnalyticsClient;
+        private readonly MapsApiClient _mapsApiClient;
+        private readonly ConfigurationClient _configurationClient;
 
         public DemoService(
             IOptionsSnapshot<DemoSettings> settings,
+            SecretClient secretClient,
             MsiDbContext dbContext,
-            IHttpClientFactory httpClientFactory)
+            BlobServiceClient blobServiceClient,
+            DataLakeServiceClient dataLakeServiceClient,
+            EventHubProducerClient eventHubProducerClient,
+            ServiceBusClient serviceBusClient,
+            TokenCredential tokenCredential,
+            CustomApiClient customApiClient,
+            CosmosClient cosmosClient,
+            TextAnalyticsClient textAnalyticsClient,
+            MapsApiClient mapsApiClient,
+            ConfigurationClient configurationClient)
         {
             _settings = settings.Value;
+            _secretClient = secretClient;
             _dbContext = dbContext;
-            _httpClient = httpClientFactory.CreateClient(HttpClients.CustomApi);
+            _blobServiceClient = blobServiceClient;
+            _dataLakeServiceClient = dataLakeServiceClient;
+            _eventHubProducerClient = eventHubProducerClient;
+            _serviceBusClient = serviceBusClient;
+            _tokenCredential = tokenCredential;
+            _customApiClient = customApiClient;
+            _cosmosClient = cosmosClient;
+            _textAnalyticsClient = textAnalyticsClient;
+            _mapsApiClient = mapsApiClient;
+            _configurationClient = configurationClient;
+        }
+
+        public async Task<KeyVaultConfigViewModel> AccessKeyVault()
+        {
+            var secret = await _secretClient.GetSecretAsync("Demo--KeyVaultSecret");
+
+            return new KeyVaultConfigViewModel
+            {
+                SecretValueFromConfig = _settings.KeyVaultSecret,
+                SecretValueFromVault = secret.Value.Value,
+            };
         }
 
         public async Task<StorageViewModel> AccessStorage()
         {
-            var serviceClient = new BlobServiceClient(
-                new Uri($"https://{_settings.StorageAccountName}.blob.core.windows.net"),
-                new ManagedIdentityStorageTokenCredential(_settings.ManagedIdentityTenantId));
-            BlobContainerClient containerClient = serviceClient.GetBlobContainerClient(_settings.StorageContainerName);
+            BlobContainerClient containerClient = _blobServiceClient.GetBlobContainerClient(_settings.StorageContainerName);
             BlobClient blobClient = containerClient.GetBlobClient(_settings.StorageBlobName);
-            Response<BlobDownloadInfo> response = await blobClient.DownloadAsync();
+            Azure.Response<BlobDownloadInfo> response = await blobClient.DownloadAsync();
 
             using (var reader = new StreamReader(response.Value.Content))
             {
                 // We download the whole file here because we are going to show it on the Razor view
-                // Usually when reading files from Storage you should return the file via the Stream
+                // Usually when reading files from Storage you should return the file via a Stream
                 string content = await reader.ReadToEndAsync();
                 return new StorageViewModel
                 {
@@ -91,10 +132,22 @@ namespace Joonasw.ManagedIdentityDemos.Services
         {
             var results = new List<SqlRowModel>();
 
-            using (var conn = new SqlConnection(_settings.SqlConnectionString))
+            AccessToken accessToken;
+            if (CachedAdoNetToken.ExpiresOn > DateTime.UtcNow.AddMinutes(4))
             {
-                string accessToken = await GetAccessToken("https://database.windows.net/");
-                conn.AccessToken = accessToken;
+                accessToken = CachedAdoNetToken;
+            }
+            else
+            {
+                accessToken = await _tokenCredential.GetTokenAsync(
+                    new TokenRequestContext(new[] { "https://database.windows.net/" }),
+                    default);
+                CachedAdoNetToken = accessToken;
+            }
+
+            await using (var conn = new SqlConnection(_settings.SqlConnectionString))
+            {
+                conn.AccessToken = accessToken.Token;
 
                 await conn.OpenAsync();
 
@@ -117,91 +170,114 @@ namespace Joonasw.ManagedIdentityDemos.Services
                     }
                 }
 
-                reader.Close();
+                await reader.CloseAsync();
             }
 
             return results;
         }
 
+        public async Task<CosmosDbViewModel> AccessCosmosDb()
+        {
+            Container container = _cosmosClient.GetContainer(_settings.CosmosDbDatabaseId, _settings.CosmosDbContainerId);
+            FeedIterator<CosmosItemModel> iterator =
+                container.GetItemQueryIterator<CosmosItemModel>("SELECT * FROM c");
+            var result = new CosmosDbViewModel
+            {
+                Documents = new List<CosmosDocumentModel>()
+            };
+
+            while (iterator.HasMoreResults)
+            {
+                FeedResponse<CosmosItemModel> response = await iterator.ReadNextAsync();
+                result.Documents.AddRange(response.Select(x => new CosmosDocumentModel
+                {
+                    Id = x.Id,
+                    Value = x.Value
+                }));
+            }
+
+            return result;
+        }
+
         public async Task<CustomServiceViewModel> AccessCustomApi()
         {
-            // This will not work in local environment
-            // Local gets token as a user
-            // But we need to use app permissions, i.e. acquire token as application only
-            string accessToken = await GetAccessToken(_settings.CustomApiApplicationIdUri, _settings.CustomApiTokenProviderConnectionString);
-            var req = new HttpRequestMessage(HttpMethod.Get, $"{_settings.CustomApiBaseUrl}/api/test");
-            req.Headers.Authorization =
-                new AuthenticationHeaderValue("Bearer", accessToken);
-            req.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-            HttpResponseMessage res = await _httpClient.SendAsync(req);
-            string resJson = await res.Content.ReadAsStringAsync();
-
+            var response = await _customApiClient.Request();
             return new CustomServiceViewModel
             {
-                Claims = JsonConvert.DeserializeObject<Dictionary<string, string>>(resJson)
+                Claims = response
             };
         }
 
         public async Task SendServiceBusQueueMessage()
         {
-            string endpoint = _settings.ServiceBusNamespace + ".servicebus.windows.net";
-            string queueName = _settings.ServiceBusQueueName;
-            // We could use ManagedServiceIdentityTokenProvider here
-            // But it failed for me with an assembly not found error relating to the AppServices Authentication library
-            var tokenProvider = new ManagedIdentityServiceBusTokenProvider(_settings.ManagedIdentityTenantId);
-            var queueClient = new QueueClient(endpoint, queueName, tokenProvider);
+            ServiceBusSender sender = _serviceBusClient.CreateSender(_settings.ServiceBusQueueName);
 
-            var message = new Message(
-                Encoding.UTF8.GetBytes($"Test message {Guid.NewGuid()} ({DateTime.UtcNow:HH:mm:ss})"));
-            await queueClient.SendAsync(message);
+            await sender.SendMessageAsync(new ServiceBusMessage($"Test message {Guid.NewGuid()} ({DateTime.UtcNow:HH:mm:ss})"));
         }
 
         public async Task SendEventHubsMessage()
         {
-            string hubNamespace = _settings.EventHubNamespace;
-            var endpoint = new Uri($"sb://{hubNamespace}.servicebus.windows.net/");
-            string hubName = _settings.EventHubName;
-            var client = EventHubClient.CreateWithTokenProvider(
-                endpoint,
-                hubName,
-                new ManagedIdentityEventHubsTokenProvider(_settings.ManagedIdentityTenantId));
-            // You can also do this (but then you can't specify the tenant used):
-            // var client = EventHubClient.CreateWithManagedIdentity(endpoint, hubName);
-            byte[] bytes = Encoding.UTF8.GetBytes($"Test message {Guid.NewGuid()} ({DateTime.UtcNow:HH:mm:ss})");
-            await client.SendAsync(new EventData(bytes));
+            using EventDataBatch batch = await _eventHubProducerClient.CreateBatchAsync();
+            batch.TryAdd(new EventData($"Test message {Guid.NewGuid()} ({DateTime.UtcNow:HH:mm:ss})"));
+
+            await _eventHubProducerClient.SendAsync(batch);
         }
 
         public async Task<DataLakeViewModel> AccessDataLake()
         {
-            string token = await GetAccessToken("https://datalake.azure.net/");
-            string accountFqdn = $"{_settings.DataLakeStoreName}.azuredatalakestore.net";
-            var client = AdlsClient.CreateClient(accountFqdn, $"Bearer {token}");
-
-            string filename = _settings.DataLakeFileName;
-            string content = null;
-            using (var reader = new StreamReader(await client.GetReadStreamAsync(filename)))
+            var x = _dataLakeServiceClient.GetFileSystemClient("test");
+            var y = x.GetDirectoryClient("test");
+            var z = y.GetFileClient("test.txt");
+            var stream = await z.OpenReadAsync();
+            using (var reader = new StreamReader(stream))
             {
-                content = await reader.ReadToEndAsync();
+                // We download the whole file here because we are going to show it on the Razor view
+                // Usually when reading files from Storage you should return the file via a Stream
+                string content = await reader.ReadToEndAsync();
+                return new DataLakeViewModel
+                {
+                    FileContent = content
+                };
             }
+        }
 
-            return new DataLakeViewModel
+        public async Task<CognitiveServicesModel> AccessCognitiveServices(string input)
+        {
+            Azure.Response<DocumentSentiment> response =
+                await _textAnalyticsClient.AnalyzeSentimentAsync(input);
+            DocumentSentiment sentiment = response.Value;
+
+            return new CognitiveServicesModel
             {
-                FileContent = content
+                Sentiment = sentiment.Sentiment.ToString(),
+                ConfidenceScores = new Dictionary<string, double>
+                {
+                    [TextSentiment.Positive.ToString()] = sentiment.ConfidenceScores.Positive,
+                    [TextSentiment.Negative.ToString()] = sentiment.ConfidenceScores.Negative,
+                    [TextSentiment.Neutral.ToString()] = sentiment.ConfidenceScores.Neutral,
+                }
             };
         }
 
-        private async Task<string> GetAccessToken(string resource, string tokenProviderConnectionString = null)
+        public async Task<AzureMapsViewModel> AccessAzureMaps(string input)
         {
-            var authProvider = new AzureServiceTokenProvider(tokenProviderConnectionString);
-            string tenantId = _settings.ManagedIdentityTenantId;
-
-            if (tenantId != null && tenantId.Length == 0)
+            MapsPoiResults results = await _mapsApiClient.SearchPointsOfInterest(input);
+            return new AzureMapsViewModel
             {
-                tenantId = null; //We want to clearly indicate to the provider if we do not specify a tenant, so no empty strings
-            }
+                Results = results
+            };
+        }
 
-            return await authProvider.GetAccessTokenAsync(resource, tenantId);
+        public async Task<AppConfigViewModel> AccessAppConfig()
+        {
+            Azure.Response<ConfigurationSetting> response =
+                await _configurationClient.GetConfigurationSettingAsync("Demo:AppConfigValue");
+
+            return new AppConfigViewModel
+            {
+                ValueFromConfig = _settings.AppConfigValue,
+                ValueFromAppConfigApi = response.Value.Value
+            };
         }
     }
 }

@@ -1,0 +1,24 @@
+﻿@model CosmosDbViewModel
+@{
+    ViewData["Title"] = "Cosmos DB";
+}
+
+<h2>Cosmos DB</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Value</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var row in Model.Documents)
+        {
+            <tr>
+                <td>@row.Id</td>
+                <td>@row.Value</td>
+            </tr>
+        }
+    </tbody>
+</table>

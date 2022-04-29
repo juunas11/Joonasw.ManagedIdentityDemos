@@ -1,0 +1,36 @@
+﻿@model CognitiveServicesModel
+@{
+    ViewData["Title"] = "Cognitive Services";
+}
+
+<h2>Cognitive Services</h2>
+
+<p>Enter text for sentiment analysis (max 100 chars)</p>
+
+<form method="post" autocomplete="off">
+    <input autocomplete="false" name="hidden" type="text" style="display:none;">
+
+    <div class="mb-3">
+        <label asp-for=Input class="form-label"></label>
+        <input asp-for=Input class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+
+@if (Model.Sentiment != null)
+{
+    <h3>Results</h3>
+    <p>
+        <strong>Sentiment:</strong>&nbsp;@Model.Sentiment
+    </p>
+
+    <p>Confidence scores:</p>
+
+    <ul class="mb-3">
+        @foreach (var pair in Model.ConfidenceScores)
+        {
+            <li>@pair.Key: @pair.Value</li>
+        }
+    </ul>
+}

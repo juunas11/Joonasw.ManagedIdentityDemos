@@ -1,9 +1,13 @@
 ﻿@model KeyVaultConfigViewModel
 @{
-    ViewData["Title"] = "Azure Key Vault configuration";
+    ViewData["Title"] = "Azure Key Vault";
 }
 
 <h2>Azure Key Vault as a configuration provider</h2>
 
-<p>Value from configuration: <strong>@Model.SecretValue</strong></p>
+<p>Value from configuration: <strong>@Model.SecretValueFromConfig</strong></p>
+
+<h2>Azure Key Vault secret read directly</h2>
+
+<p>Value from Key Vault: <strong>@Model.SecretValueFromVault</strong></p>
 

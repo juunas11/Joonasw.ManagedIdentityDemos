@@ -1,0 +1,34 @@
+﻿@model AzureMapsViewModel
+@{
+    ViewData["Title"] = "Azure Maps";
+}
+
+<h2>Azure Maps</h2>
+
+<p>Enter text for POI search (max 100 chars)</p>
+
+<form method="post" autocomplete="off">
+    <input autocomplete="false" name="hidden" type="text" style="display:none;">
+
+    <div class="mb-3">
+        <label asp-for=Input class="form-label"></label>
+        <input asp-for=Input class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+
+@if (Model.Results != null)
+{
+    <h3>Results</h3>
+    <ul>
+        @foreach(var result in Model.Results.Results)
+        {
+            <li>
+                @result.Poi.Name
+                <br />
+                @result.Address.FreeformAddress
+            </li>
+        }
+    </ul>
+}

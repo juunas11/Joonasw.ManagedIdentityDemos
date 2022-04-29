@@ -16,7 +16,7 @@ namespace Joonasw.ManagedIdentityDemos
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder
-                        .UseAzureKeyVaultConfiguration()
+                        .UseAzureKeyVaultAndAppConfiguration()
                         .UseStartup<Startup>();
                 });
     }
