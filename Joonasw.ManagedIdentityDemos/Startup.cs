@@ -49,11 +49,14 @@ namespace Joonasw.ManagedIdentityDemos
                 o.ConnectionString = Configuration["ApplicationInsights:ConnectionString"];
             });
 
+            var tenantId = string.IsNullOrEmpty(demoSettings.ManagedIdentityTenantId)
+                ? null
+                : demoSettings.ManagedIdentityTenantId;
             var credential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
             {
-                SharedTokenCacheTenantId = demoSettings.ManagedIdentityTenantId,
-                VisualStudioCodeTenantId = demoSettings.ManagedIdentityTenantId,
-                VisualStudioTenantId = demoSettings.ManagedIdentityTenantId,
+                SharedTokenCacheTenantId = tenantId,
+                VisualStudioCodeTenantId = tenantId,
+                VisualStudioTenantId = tenantId,
             });
             services.AddSingleton<TokenCredential>(credential);
             TokenCredential customApiCredential = string.IsNullOrEmpty(demoSettings.CustomApiClientSecret)
