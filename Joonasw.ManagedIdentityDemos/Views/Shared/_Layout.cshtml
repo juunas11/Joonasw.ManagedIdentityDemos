@@ -44,6 +44,7 @@
                                 Configuration
                             </a>
                             <div class="dropdown-menu" aria-labelledby="config-dropdown">
+                                <a class="dropdown-item" asp-controller="Demo" asp-action="AppConfig">App Configuration</a>
                                 <a class="dropdown-item" asp-controller="Demo" asp-action="KeyVaultConfig">Key Vault</a>
                             </div>
                         </li>
@@ -58,8 +59,8 @@
                                 Database
                             </a>
                             <div class="dropdown-menu" aria-labelledby="db-dropdown">
-                                <a class="dropdown-item" asp-controller="Demo" asp-action="SqlDatabase">SQL Database</a>
                                 <a class="dropdown-item" asp-controller="Demo" asp-action="CosmosDb">Cosmos DB</a>
+                                <a class="dropdown-item" asp-controller="Demo" asp-action="SqlDatabase">SQL Database</a>
                             </div>
                         </li>
                         <li class="nav-item dropdown">
@@ -73,8 +74,8 @@
                                 Files
                             </a>
                             <div class="dropdown-menu" aria-labelledby="file-dropdown">
-                                <a class="dropdown-item" asp-controller="Demo" asp-action="Storage">Storage</a>
                                 <a class="dropdown-item" asp-controller="Demo" asp-action="DataLake">Data Lake</a>
+                                <a class="dropdown-item" asp-controller="Demo" asp-action="Storage">Storage</a>
                             </div>
                         </li>
                         <li class="nav-item dropdown">
@@ -88,10 +89,10 @@
                                 Messaging
                             </a>
                             <div class="dropdown-menu" aria-labelledby="msg-dropdown">
-                                <a class="dropdown-item" asp-controller="Demo" asp-action="ServiceBus">Service Bus Queue Send</a>
-                                <a class="dropdown-item" asp-controller="Demo" asp-action="ServiceBusListen">Service Bus Queue Listen</a>
                                 <a class="dropdown-item" asp-controller="Demo" asp-action="EventHubs">Event Hub Send</a>
                                 <a class="dropdown-item" asp-controller="Demo" asp-action="EventHubsListen">Event Hub Listen</a>
+                                <a class="dropdown-item" asp-controller="Demo" asp-action="ServiceBus">Service Bus Queue Send</a>
+                                <a class="dropdown-item" asp-controller="Demo" asp-action="ServiceBusListen">Service Bus Queue Listen</a>
                             </div>
                         </li>
                         <li class="nav-item dropdown">
@@ -105,6 +106,7 @@
                                 Misc
                             </a>
                             <div class="dropdown-menu" aria-labelledby="misc-dropdown">
+                                <a class="dropdown-item" asp-controller="Demo" asp-action="AzureMaps">Azure Maps</a>
                                 <a class="dropdown-item" asp-controller="Demo" asp-action="CognitiveServices">Cognitive Services</a>
                                 <a class="dropdown-item" asp-controller="Demo" asp-action="CustomService">Custom API</a>
                             </div>

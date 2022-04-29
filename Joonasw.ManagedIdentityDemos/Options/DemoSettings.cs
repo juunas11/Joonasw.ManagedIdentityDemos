@@ -15,6 +15,9 @@ namespace Joonasw.ManagedIdentityDemos.Options
         public string KeyVaultBaseUrl { get; set; }
         public string KeyVaultSecret { get; set; }
 
+        public string AppConfigUrl { get; set; }
+        public string AppConfigValue { get; set; }
+
         public string CustomApiBaseUrl { get; set; }
         public string CustomApiApplicationIdUri { get; set; }
         public string CustomApiTenantId { get; set; }
@@ -37,5 +40,7 @@ namespace Joonasw.ManagedIdentityDemos.Options
         public string CosmosDbContainerId { get; set; }
 
         public string CognitiveServicesBaseUrl { get; set; }
+
+        public string MapsClientId { get; set; }
     }
 }

@@ -6,6 +6,7 @@ namespace Joonasw.ManagedIdentityDemos.Contracts
     public interface IDemoService
     {
         Task<KeyVaultConfigViewModel> AccessKeyVault();
+        Task<AppConfigViewModel> AccessAppConfig();
         Task<StorageViewModel> AccessStorage();
         Task<SqlDatabaseViewModel> AccessSqlDatabase();
         Task<CosmosDbViewModel> AccessCosmosDb();
@@ -13,6 +14,7 @@ namespace Joonasw.ManagedIdentityDemos.Contracts
         Task SendServiceBusQueueMessage();
         Task SendEventHubsMessage();
         Task<DataLakeViewModel> AccessDataLake();
-        Task<CognitiveServicesResultsViewModel> AccessCognitiveServices(string input);
+        Task<CognitiveServicesModel> AccessCognitiveServices(string input);
+        Task<AzureMapsViewModel> AccessAzureMaps(string input);
     }
 }

@@ -68,6 +68,7 @@ namespace Joonasw.ManagedIdentityDemos
                     var settings = serviceProvider.GetRequiredService<IOptionsSnapshot<DemoSettings>>();
                     return new CustomApiClient(httpClient, settings, customApiCredential);
                 });
+            services.AddHttpClient<MapsApiClient>();
 
             services.AddSingleton((IServiceProvider _) =>
             {
@@ -82,6 +83,7 @@ namespace Joonasw.ManagedIdentityDemos
                 clients.AddServiceBusClientWithNamespace($"{demoSettings.ServiceBusNamespace}.servicebus.windows.net");
                 clients.AddSecretClient(new Uri(demoSettings.KeyVaultBaseUrl));
                 clients.AddTextAnalyticsClient(new Uri(demoSettings.CognitiveServicesBaseUrl));
+                clients.AddConfigurationClient(new Uri(demoSettings.AppConfigUrl));
                 clients.UseCredential(credential);
             });
         }

@@ -1,4 +1,4 @@
-﻿@model CognitiveServicesInputModel
+﻿@model CognitiveServicesModel
 @{
     ViewData["Title"] = "Cognitive Services";
 }
@@ -17,3 +17,20 @@
 
     <button type="submit" class="btn btn-primary">Submit</button>
 </form>
+
+@if (Model.Sentiment != null)
+{
+    <h3>Results</h3>
+    <p>
+        <strong>Sentiment:</strong>&nbsp;@Model.Sentiment
+    </p>
+
+    <p>Confidence scores:</p>
+
+    <ul class="mb-3">
+        @foreach (var pair in Model.ConfidenceScores)
+        {
+            <li>@pair.Key: @pair.Value</li>
+        }
+    </ul>
+}

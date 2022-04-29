@@ -1,6 +1,7 @@
 ﻿using Azure;
 using Azure.AI.TextAnalytics;
 using Azure.Core;
+using Azure.Data.AppConfiguration;
 using Azure.Messaging.EventHubs;
 using Azure.Messaging.EventHubs.Producer;
 using Azure.Messaging.ServiceBus;
@@ -11,6 +12,7 @@ using Azure.Storage.Files.DataLake;
 using Joonasw.ManagedIdentityDemos.Contracts;
 using Joonasw.ManagedIdentityDemos.Data;
 using Joonasw.ManagedIdentityDemos.Models;
+using Joonasw.ManagedIdentityDemos.Models.AzureMaps;
 using Joonasw.ManagedIdentityDemos.Options;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Data.SqlClient;
@@ -38,6 +40,8 @@ namespace Joonasw.ManagedIdentityDemos.Services
         private readonly CustomApiClient _customApiClient;
         private readonly CosmosClient _cosmosClient;
         private readonly TextAnalyticsClient _textAnalyticsClient;
+        private readonly MapsApiClient _mapsApiClient;
+        private readonly ConfigurationClient _configurationClient;
 
         public DemoService(
             IOptionsSnapshot<DemoSettings> settings,
@@ -50,7 +54,9 @@ namespace Joonasw.ManagedIdentityDemos.Services
             TokenCredential tokenCredential,
             CustomApiClient customApiClient,
             CosmosClient cosmosClient,
-            TextAnalyticsClient textAnalyticsClient)
+            TextAnalyticsClient textAnalyticsClient,
+            MapsApiClient mapsApiClient,
+            ConfigurationClient configurationClient)
         {
             _settings = settings.Value;
             _secretClient = secretClient;
@@ -63,6 +69,8 @@ namespace Joonasw.ManagedIdentityDemos.Services
             _customApiClient = customApiClient;
             _cosmosClient = cosmosClient;
             _textAnalyticsClient = textAnalyticsClient;
+            _mapsApiClient = mapsApiClient;
+            _configurationClient = configurationClient;
         }
 
         public async Task<KeyVaultConfigViewModel> AccessKeyVault()
@@ -233,13 +241,13 @@ namespace Joonasw.ManagedIdentityDemos.Services
             }
         }
 
-        public async Task<CognitiveServicesResultsViewModel> AccessCognitiveServices(string input)
+        public async Task<CognitiveServicesModel> AccessCognitiveServices(string input)
         {
             Azure.Response<DocumentSentiment> response =
                 await _textAnalyticsClient.AnalyzeSentimentAsync(input);
             DocumentSentiment sentiment = response.Value;
 
-            return new CognitiveServicesResultsViewModel
+            return new CognitiveServicesModel
             {
                 Sentiment = sentiment.Sentiment.ToString(),
                 ConfidenceScores = new Dictionary<string, double>
@@ -248,6 +256,27 @@ namespace Joonasw.ManagedIdentityDemos.Services
                     [TextSentiment.Negative.ToString()] = sentiment.ConfidenceScores.Negative,
                     [TextSentiment.Neutral.ToString()] = sentiment.ConfidenceScores.Neutral,
                 }
+            };
+        }
+
+        public async Task<AzureMapsViewModel> AccessAzureMaps(string input)
+        {
+            MapsPoiResults results = await _mapsApiClient.SearchPointsOfInterest(input);
+            return new AzureMapsViewModel
+            {
+                Results = results
+            };
+        }
+
+        public async Task<AppConfigViewModel> AccessAppConfig()
+        {
+            Azure.Response<ConfigurationSetting> response =
+                await _configurationClient.GetConfigurationSettingAsync("Demo:AppConfigValue");
+
+            return new AppConfigViewModel
+            {
+                ValueFromConfig = _settings.AppConfigValue,
+                ValueFromAppConfigApi = response.Value.Value
             };
         }
     }

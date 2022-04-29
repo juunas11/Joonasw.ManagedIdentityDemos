@@ -1,0 +1,13 @@
+﻿@model AppConfigViewModel
+@{
+    ViewData["Title"] = "Azure App Configuration";
+}
+
+<h2>Azure App Configuration as a configuration provider</h2>
+
+<p>Value from configuration: <strong>@Model.ValueFromConfig</strong></p>
+
+<h2>Azure App Configuration read directly</h2>
+
+<p>Value from App Configuration: <strong>@Model.ValueFromAppConfigApi</strong></p>
+
