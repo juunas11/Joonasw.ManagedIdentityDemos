@@ -18,7 +18,7 @@
 		<PackageReference Include="Azure.Data.AppConfiguration" Version="1.2.0" />
 		<PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.2.2" />
 		<PackageReference Include="Azure.Identity" Version="1.6.0" />
-		<PackageReference Include="Azure.Storage.Blobs" Version="12.11.0" />
+		<PackageReference Include="Azure.Storage.Blobs" Version="12.13.0" />
 		<PackageReference Include="Azure.Storage.Files.DataLake" Version="12.9.0" />
 		<PackageReference Include="Azure.Messaging.EventHubs" Version="5.6.2" />
 		<PackageReference Include="Azure.Messaging.EventHubs.Processor" Version="5.6.2" />
