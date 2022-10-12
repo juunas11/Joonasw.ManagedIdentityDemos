@@ -29,10 +29,6 @@ namespace Joonasw.ManagedIdentityDemos.Extensions
 
                 if (!string.IsNullOrEmpty(appConfigUrl))
                 {
-                    //var uri = new Uri(appConfigUrl);
-                    //var scope = uri.GetComponents(UriComponents.SchemeAndServer, UriFormat.SafeUnescaped) + "/.default";
-                    //var token = credential.GetToken(new Azure.Core.TokenRequestContext(new[] { scope }, null));
-
                     builder.AddAzureAppConfiguration(options =>
                     {
                         options.Connect(new Uri(appConfigUrl), credential);

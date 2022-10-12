@@ -28,7 +28,6 @@ namespace Joonasw.ManagedIdentityDemos.Services
 {
     public class DemoService : IDemoService
     {
-        private static AccessToken CachedAdoNetToken;
         private readonly DemoSettings _settings;
         private readonly SecretClient _secretClient;
         private readonly MsiDbContext _dbContext;
@@ -36,7 +35,6 @@ namespace Joonasw.ManagedIdentityDemos.Services
         private readonly DataLakeServiceClient _dataLakeServiceClient;
         private readonly EventHubProducerClient _eventHubProducerClient;
         private readonly ServiceBusClient _serviceBusClient;
-        private readonly TokenCredential _tokenCredential;
         private readonly CustomApiClient _customApiClient;
         private readonly CosmosClient _cosmosClient;
         private readonly TextAnalyticsClient _textAnalyticsClient;
@@ -51,7 +49,6 @@ namespace Joonasw.ManagedIdentityDemos.Services
             DataLakeServiceClient dataLakeServiceClient,
             EventHubProducerClient eventHubProducerClient,
             ServiceBusClient serviceBusClient,
-            TokenCredential tokenCredential,
             CustomApiClient customApiClient,
             CosmosClient cosmosClient,
             TextAnalyticsClient textAnalyticsClient,
@@ -65,7 +62,6 @@ namespace Joonasw.ManagedIdentityDemos.Services
             _dataLakeServiceClient = dataLakeServiceClient;
             _eventHubProducerClient = eventHubProducerClient;
             _serviceBusClient = serviceBusClient;
-            _tokenCredential = tokenCredential;
             _customApiClient = customApiClient;
             _cosmosClient = cosmosClient;
             _textAnalyticsClient = textAnalyticsClient;
@@ -116,8 +112,6 @@ namespace Joonasw.ManagedIdentityDemos.Services
 
         private async Task<List<SqlRowModel>> GetSqlRowsWithEfCore()
         {
-            // Data / ManagedIdentityConnectionInterceptor sets up the token for the connection
-            // So no need to acquire token here
             return await _dbContext
                 .Tests
                 .Select(t => new SqlRowModel
@@ -132,23 +126,8 @@ namespace Joonasw.ManagedIdentityDemos.Services
         {
             var results = new List<SqlRowModel>();
 
-            AccessToken accessToken;
-            if (CachedAdoNetToken.ExpiresOn > DateTime.UtcNow.AddMinutes(4))
-            {
-                accessToken = CachedAdoNetToken;
-            }
-            else
-            {
-                accessToken = await _tokenCredential.GetTokenAsync(
-                    new TokenRequestContext(new[] { "https://database.windows.net/" }),
-                    default);
-                CachedAdoNetToken = accessToken;
-            }
-
             await using (var conn = new SqlConnection(_settings.SqlConnectionString))
             {
-                conn.AccessToken = accessToken.Token;
-
                 await conn.OpenAsync();
 
                 SqlCommand cmd = conn.CreateCommand();

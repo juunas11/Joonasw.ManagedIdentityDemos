@@ -39,9 +39,8 @@ namespace Joonasw.ManagedIdentityDemos
             services.Configure<DemoSettings>(Configuration.GetSection("Demo"));
 
             DemoSettings demoSettings = Configuration.GetSection("Demo").Get<DemoSettings>();
-            var managedIdentityInterceptor = new ManagedIdentityConnectionInterceptor(demoSettings);
             services.AddDbContext<MsiDbContext>(o =>
-                o.UseSqlServer(demoSettings.SqlConnectionString).AddInterceptors(managedIdentityInterceptor));
+                o.UseSqlServer(demoSettings.SqlConnectionString));
 
             services.AddApplicationInsightsTelemetry(o =>
             {
